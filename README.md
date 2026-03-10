@@ -51,6 +51,23 @@ E = elasticity(sol)
 | General | DI | Deterministic | `IPMProblem(GeneralIPM(), mega_kernel, states, n0, tspan)` |
 | ... | ... | ... | All 12 combinations supported |
 
+## Vignettes
+
+| # | Vignette | Description |
+|---|----------|-------------|
+| 1 | [Introduction to Integral Projection Models](https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/vignettes/01_introduction/01_introduction.md) | Core concepts: kernels, vital rates, domain discretization, eigenanalysis |
+| 2 | [Ungulate IPM: Soay Sheep](https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/vignettes/02_ungulate/02_ungulate.md) | Complete worked example fitting an IPM to Soay sheep data |
+| 3 | [Eviction Correction](https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/vignettes/03_eviction/03_eviction.md) | Correcting for individuals lost outside domain bounds |
+| 4 | [Sensitivity and Elasticity Analysis](https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/vignettes/04_sensitivity_elasticity/04_sensitivity_elasticity.md) | Perturbation analysis of continuous-state models |
+| 5 | [Density-Dependent IPMs](https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/vignettes/05_density_dependent/05_density_dependent.md) | Models with density-dependent vital rates |
+| 6 | [Stochastic IPMs](https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/vignettes/06_stochastic/06_stochastic.md) | Kernel-resampled and parameter-resampled stochastic models |
+| 7 | [General IPM with Seed Bank](https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/vignettes/07_general_ipm/07_general_ipm.md) | Multi-state models mixing continuous and discrete states |
+| 8 | [Age x Size IPM](https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/vignettes/08_age_size/08_age_size.md) | Age-structured expansion of size-based kernels |
+| 9 | [Categorical Composition of IPMs](https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/vignettes/09_categorical/09_categorical.md) | Composing IPMs using categorical/functorial methods |
+| 10 | [PADRINO Database Integration](https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/vignettes/10_padrino/10_padrino.md) | Downloading, building, and analyzing models from the PADRINO database |
+| 11 | [Evolving IPMs: Evolutionary Demography](https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/vignettes/11_evolving_ipm/11_evolving_ipm.md) | IPMs with heritable trait variation and selection |
+| 12 | [Time-Lagged Integral Projection Models](https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/vignettes/12_time_lag/12_time_lag.md) | State-augmented models with delayed fecundity (Kuss et al. 2008) |
+
 ## Installation
 
 This package is not yet registered in the Julia General registry. Install directly from GitHub (the [ProjectionModels.jl](https://github.com/ecorecipes/ProjectionModels.jl) dependency must be installed first):
