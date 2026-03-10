@@ -4,7 +4,7 @@ format:
   html:
     code-fold: false
     toc: true
-jupyter: julia-1.10
+engine: julia
 ---
 
 ## Introduction
@@ -132,8 +132,8 @@ Save the database locally for offline use:
 
 ```{julia}
 #| eval: false
-pdb_save(pdb, "/tmp/padrino_data/")
-pdb2 = pdb_load("/tmp/padrino_data/")
+pdb_save(pdb, joinpath(tempdir(), "padrino_data"))
+pdb2 = pdb_load(joinpath(tempdir(), "padrino_data"))
 ```
 
 ## Notes
