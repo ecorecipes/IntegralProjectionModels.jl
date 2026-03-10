@@ -1,0 +1,412 @@
+---
+title: "Age x Size IPM"
+author: "Simon Frost"
+format:
+  html:
+    code-fold: false
+    toc: true
+---
+
+## Overview
+
+In many populations, vital rates depend on both **size** and **age**. An age×size IPM tracks the joint distribution $n_a(z, t)$ — the density of individuals of age $a$ and size $z$ at time $t$.
+
+The model is implemented as a block-structured matrix where:
+
+- **P kernels** (survival-growth) appear on the sub-diagonal: age $a$ survivors move to age $a+1$
+- **F kernels** (fecundity) appear in the first row: offspring from all ages enter age class 1
+- The maximum age class is absorbing: survivors at max age stay at max age
+
+This vignette models Soay sheep with age-dependent survival, growth, reproduction, and recruitment, following Ellner, Childs & Rees (Chapter 6).
+
+## Setup
+
+```{r}
+library(ipmr)
+```
+
+## Parameters
+
+Age effects are linear on the logit (survival, reproduction, recruitment) or linear (growth) scale. The `_a` parameters give the per-year age effect.
+
+```{r}
+data_list <- list(
+  # Survival (logistic: intercept + slope*z + age_effect*a)
+  surv_int  = -17.0,
+  surv_z    =  6.68,
+  surv_a    = -0.334,     # strong negative: senescence
+
+  # Growth (linear: intercept + slope*z + age_effect*a)
+  grow_int  =  1.27,
+  grow_z    =  0.612,
+  grow_a    = -0.00724,   # slight negative: growth slows with age
+  grow_sd   =  0.0787,
+
+  # Reproduction probability (logistic)
+  repr_int  = -7.88,
+  repr_z    =  3.11,
+  repr_a    = -0.078,     # declines with age
+
+  # Recruitment probability (logistic, no size effect)
+  recr_int  =  1.11,
+  recr_a    =  0.184,     # increases with age (experienced mothers)
+
+  # Recruit size (depends on maternal size only, NOT age)
+  rcsz_int  =  0.362,
+  rcsz_z    =  0.709,
+  rcsz_sd   =  0.159
+)
+```
+
+## Domain and Age Structure
+
+```{r}
+L <- 1.6
+U <- 3.7
+m <- 100
+max_age <- 10
+
+h <- (U - L) / m
+meshpts <- L + ((1:m) - 1/2) * h
+```
+
+```{r}
+#| echo: false
+cat("Size mesh:", m, "points on [", L, ",", U, "]\n")
+cat("Age classes: 0 to", max_age, "(age", max_age, "is absorbing)\n")
+cat("Total state space:", m * (max_age + 1), "=", m, "×", max_age + 1, "\n")
+```
+
+## Age-Dependent Vital Rates
+
+```{r}
+s_z <- function(z, a) {
+  1 / (1 + exp(-(data_list$surv_int + data_list$surv_z * z + data_list$surv_a * a)))
+}
+
+g_z1z <- function(z_prime, z, a) {
+  mu <- data_list$grow_int + data_list$grow_z * z + data_list$grow_a * a
+  dnorm(z_prime, mu, data_list$grow_sd)
+}
+
+pb_z <- function(z, a) {
+  if (a <= 0) return(0)  # age 0 = newborns, cannot reproduce
+  1 / (1 + exp(-(data_list$repr_int + data_list$repr_z * z + data_list$repr_a * a)))
+}
+
+pr_z <- function(a) {
+  1 / (1 + exp(-(data_list$recr_int + data_list$recr_a * a)))
+}
+
+c_z1z <- function(z_prime, z) {
+  dnorm(z_prime, data_list$rcsz_int + data_list$rcsz_z * z, data_list$rcsz_sd)
+}
+```
+
+### Visualize Age Effects
+
+```{r}
+ages_plot <- c(1, 3, 5, 7, 10)
+z_plot <- seq(L, U, length.out = 100)
+cols <- rainbow(length(ages_plot))
+
+par(mfrow = c(2, 2))
+
+# Survival by age
+plot(NULL, xlim = c(L, U), ylim = c(0, 1),
+     xlab = "Size", ylab = "s(z)", main = "Survival by age")
+for (i in seq_along(ages_plot)) {
+  lines(z_plot, sapply(z_plot, s_z, a = ages_plot[i]), lwd = 2, col = cols[i])
+}
+legend("topleft", paste("Age", ages_plot), col = cols, lwd = 2, cex = 0.7)
+
+# Reproduction probability by age
+plot(NULL, xlim = c(L, U), ylim = c(0, 1),
+     xlab = "Size", ylab = expression(p[b](z)), main = "Reproduction prob by age")
+for (i in seq_along(ages_plot)) {
+  lines(z_plot, sapply(z_plot, pb_z, a = ages_plot[i]), lwd = 2, col = cols[i])
+}
+legend("topleft", paste("Age", ages_plot), col = cols, lwd = 2, cex = 0.7)
+
+# Recruitment probability by age
+plot(1:max_age, sapply(1:max_age, pr_z), type = "b", pch = 16, lwd = 2,
+     xlab = "Age", ylab = expression(p[r](a)), main = "Recruitment prob by age")
+
+# Growth mean by age
+plot(NULL, xlim = c(L, U), ylim = c(L, U),
+     xlab = "Size (t)", ylab = "Mean size (t+1)", main = "Growth mean by age")
+for (i in seq_along(ages_plot)) {
+  a <- ages_plot[i]
+  lines(z_plot, data_list$grow_int + data_list$grow_z * z_plot + data_list$grow_a * a,
+        lwd = 2, col = cols[i])
+}
+legend("topleft", paste("Age", ages_plot), col = cols, lwd = 2, cex = 0.7)
+par(mfrow = c(1, 1))
+```
+
+## Building Age-Specific Kernels (Manual Construction)
+
+We build the full block-structured matrix manually, constructing age-specific P and F kernel matrices.
+
+```{r}
+# Build P kernel matrix for a given age
+build_P <- function(a) {
+  P <- matrix(0, m, m)
+  for (j in 1:m) {
+    for (i in 1:m) {
+      P[i, j] <- s_z(meshpts[j], a) * g_z1z(meshpts[i], meshpts[j], a) * h
+    }
+  }
+  return(P)
+}
+
+# Build F kernel matrix for a given age
+build_F <- function(a) {
+  F_mat <- matrix(0, m, m)
+  for (j in 1:m) {
+    for (i in 1:m) {
+      F_mat[i, j] <- s_z(meshpts[j], a) * pb_z(meshpts[j], a) * 0.5 *
+        pr_z(a) * c_z1z(meshpts[i], meshpts[j]) * h
+    }
+  }
+  return(F_mat)
+}
+```
+
+```{r}
+# Assemble the full block matrix
+# Ages 0, 1, ..., max_age => max_age + 1 age classes
+n_ages <- max_age + 1
+total_dim <- m * n_ages
+
+K_age <- matrix(0, total_dim, total_dim)
+
+for (a in 0:max_age) {
+  # Row/column blocks for age a
+  r_a <- (a * m + 1):((a + 1) * m)
+
+  # F kernel: all ages contribute offspring to age-0 block (first row of blocks)
+  F_a <- build_F(a)
+  K_age[1:m, r_a] <- F_a
+
+  if (a < max_age) {
+    # P kernel: age a survivors move to age a+1 (sub-diagonal)
+    P_a <- build_P(a)
+    r_next <- ((a + 1) * m + 1):((a + 2) * m)
+    K_age[r_next, r_a] <- P_a
+  } else {
+    # Max age is absorbing: survivors stay at max age
+    P_max <- build_P(max_age)
+    K_age[r_a, r_a] <- P_max
+  }
+}
+```
+
+```{r}
+#| echo: false
+cat("Full kernel size:", nrow(K_age), "x", ncol(K_age), "\n")
+cat("  =", n_ages, "age classes ×", m, "size classes\n")
+```
+
+## Eigenanalysis
+
+```{r}
+e_age <- eigen(K_age)
+lam_age <- Re(e_age$values[1])
+```
+
+```{r}
+#| echo: false
+cat("Age×size model λ =", round(lam_age, 6), "\n")
+```
+
+### Comparison with Size-Only Model
+
+The size-only model (no age structure) gives a different $\lambda$ because it does not account for age-specific vital rate variation.
+
+```{r}
+s_z_avg <- function(z) mean(sapply(0:max_age, function(a) s_z(z, a)))
+g_z1z_avg <- function(z_prime, z) mean(sapply(0:max_age, function(a) g_z1z(z_prime, z, a)))
+fec_avg <- function(z_prime, z) {
+  mean(sapply(0:max_age, function(a) {
+    s_z(z, a) * pb_z(z, a) * 0.5 * pr_z(a) * c_z1z(z_prime, z)
+  }))
+}
+
+K_avg <- matrix(0, m, m)
+for (j in 1:m) {
+  for (i in 1:m) {
+    K_avg[i, j] <- (s_z_avg(meshpts[j]) * g_z1z_avg(meshpts[i], meshpts[j]) +
+                       fec_avg(meshpts[i], meshpts[j])) * h
+  }
+}
+
+e_avg <- eigen(K_avg)
+lam_avg <- Re(e_avg$values[1])
+```
+
+```{r}
+#| echo: false
+cat("Size-only (age-averaged) λ =", round(lam_avg, 6), "\n")
+cat("Age×size λ                 =", round(lam_age, 6), "\n")
+cat("Difference                 =", round(lam_age - lam_avg, 6), "\n")
+```
+
+The models give different $\lambda$ values because the age-averaged model does not properly account for the covariance between age and size in the stable population.
+
+## Block Matrix Structure
+
+```{r}
+image(1:total_dim, 1:total_dim, log10(abs(t(K_age)) + 1e-20),
+      xlab = "State index", ylab = "State index",
+      main = paste0("log₁₀|K| (", n_ages, " ages × ", m, " sizes)"),
+      col = hcl.colors(50, "viridis"))
+
+# Draw block boundaries
+for (a in 1:max_age) {
+  boundary <- a * m + 0.5
+  abline(v = boundary, col = "white", lwd = 0.5)
+  abline(h = boundary, col = "white", lwd = 0.5)
+}
+```
+
+The block structure shows:
+
+- **First row block**: F kernels (fecundity from all ages producing age-0 offspring)
+- **Sub-diagonal blocks**: P kernels (survival-growth, aging from $a$ to $a+1$)
+- **Last diagonal block**: P kernel for max age (absorbing: survivors stay at max age)
+
+## Stable Age-Size Distribution
+
+```{r}
+w_age <- Re(e_age$vectors[, 1])
+w_age <- w_age / sum(w_age)
+
+# Extract age-specific distributions
+age_dists <- list()
+age_totals <- numeric(n_ages)
+for (a in 0:max_age) {
+  idx <- (a * m + 1):((a + 1) * m)
+  age_dists[[a + 1]] <- w_age[idx]
+  age_totals[a + 1] <- sum(w_age[idx])
+}
+```
+
+```{r}
+#| echo: false
+cat("Stable age distribution:\n")
+for (a in 0:max_age) {
+  cat(sprintf("  Age %d: %.2f%%\n", a, age_totals[a + 1] * 100))
+}
+```
+
+```{r}
+barplot(age_totals, names.arg = 0:max_age,
+        xlab = "Age class", ylab = "Proportion",
+        main = "Stable age distribution")
+```
+
+```{r}
+# Age-specific size distributions (normalized within each age)
+cols <- rainbow(min(n_ages, 6))
+
+max_y <- 0
+for (a in 0:min(max_age, 5)) {
+  if (sum(age_dists[[a + 1]]) > 1e-10) {
+    d <- age_dists[[a + 1]] / sum(age_dists[[a + 1]])
+    max_y <- max(max_y, max(d))
+  }
+}
+plot(NULL, xlim = c(L, U), ylim = c(0, max_y * 1.1),
+     xlab = "Log body mass", ylab = "Density",
+     main = "Stable size distribution by age")
+for (a in 0:min(max_age, 5)) {
+  if (sum(age_dists[[a + 1]]) > 1e-10) {
+    d <- age_dists[[a + 1]] / sum(age_dists[[a + 1]])
+    lines(meshpts, d, lwd = 2, col = cols[a + 1])
+  }
+}
+legend("topright", paste("Age", 0:5), col = cols[1:6], lwd = 2, cex = 0.8)
+```
+
+```{r}
+# Mean size by age
+mean_by_age <- numeric(n_ages)
+for (a in 0:max_age) {
+  if (sum(age_dists[[a + 1]]) > 1e-10) {
+    d <- age_dists[[a + 1]] / sum(age_dists[[a + 1]])
+    mean_by_age[a + 1] <- sum(d * meshpts)
+  } else {
+    mean_by_age[a + 1] <- NA
+  }
+}
+
+plot(0:max_age, mean_by_age, type = "b", pch = 16, lwd = 2,
+     xlab = "Age", ylab = "Mean log body mass",
+     main = "Mean size by age at stable distribution")
+```
+
+## Population Dynamics
+
+```{r}
+# Initial population: all in age class 0 (newborns)
+n0_age <- rep(0, total_dim)
+n0_age[1:m] <- 1 / m
+
+# Iterate
+n_steps <- 100
+n_t <- n0_age
+lambdas_age <- numeric(n_steps)
+
+for (t in 1:n_steps) {
+  n_next <- K_age %*% n_t
+  lambdas_age[t] <- sum(n_next) / sum(n_t)
+  n_t <- n_next
+}
+
+plot(lambdas_age, type = "l", lwd = 1,
+     xlab = "Time step", ylab = expression(lambda(t)),
+     main = expression("Convergence to asymptotic " * lambda * " (age×size model)"))
+abline(h = lam_age, col = "red", lty = 2, lwd = 2)
+legend("topright", c(expression(lambda(t)), expression("Asymptotic " * lambda)),
+       lty = c(1, 2), col = c("black", "red"), lwd = 2)
+```
+
+## Age-Specific Contributions
+
+```{r}
+# Which age classes contribute most to population growth?
+w_r <- Re(e_age$vectors[, 1])
+w_r <- w_r / sum(w_r)
+
+e_left <- eigen(t(K_age))
+v <- Re(e_left$vectors[, 1])
+v <- v / v[1]
+
+# Sensitivity matrix
+S_age <- outer(v, w_r) / sum(v * w_r)
+
+# Fecundity elasticity by age
+fec_elas_by_age <- numeric(n_ages)
+for (a in 0:max_age) {
+  c_range <- (a * m + 1):((a + 1) * m)
+  r_range <- 1:m
+  E_Fa <- (K_age[r_range, c_range] * S_age[r_range, c_range]) / lam_age
+  fec_elas_by_age[a + 1] <- sum(E_Fa)
+}
+
+barplot(fec_elas_by_age, names.arg = 0:max_age,
+        xlab = "Age", ylab = "Fecundity elasticity",
+        main = "Fecundity elasticity by age class")
+```
+
+## Summary
+
+In this vignette we:
+
+1. Built an **age×size IPM** for Soay sheep with age-dependent vital rates
+2. Constructed the full block matrix with age-specific P and F kernels
+3. Visualized age effects on survival (senescence), growth (slowing), and reproduction (decline)
+4. Computed $\lambda$ and compared with the size-only model
+5. Examined the stable age-size distribution showing how size distributions shift with age
+6. Computed age-specific fecundity elasticities

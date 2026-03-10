@@ -1,0 +1,412 @@
+---
+title: "Eviction Correction"
+author: "Simon Frost"
+format:
+  html:
+    code-fold: false
+    toc: true
+---
+
+## Overview
+
+**Eviction** occurs when the growth distribution of an individual extends beyond the domain boundaries $[L, U]$, causing probability mass to be lost. This leads to underestimation of survival and can bias $\lambda$ and other demographic quantities.
+
+This vignette demonstrates:
+
+1. How to diagnose eviction by examining column sums of the P kernel
+2. Three correction methods: no correction, truncated distributions, and discrete extrema
+3. The effect of correction on $\lambda$
+
+We use the monocarp (*Oenothera*) model from the introductory vignette.
+
+## Setup
+
+```{r}
+library(ipmr)
+```
+
+## Model Parameters
+
+```{r}
+data_list <- list(
+  surv_int  = -0.65,
+  surv_z    =  0.75,
+  flow_int  = -18.0,
+  flow_z    =  6.9,
+  grow_int  =  0.96,
+  grow_z    =  0.59,
+  grow_sd   =  0.67,
+  rcsz_int  = -0.08,
+  rcsz_sd   =  0.76,
+  seed_int  =  1.0,
+  seed_z    =  2.2,
+  p_r       =  0.007
+)
+```
+
+## Domain
+
+```{r}
+L <- -2.65
+U <- 4.5
+m <- 250
+```
+
+## What Is Eviction?
+
+Consider an individual at size $z$ near the upper boundary. Its expected size next year is $\mu = 0.96 + 0.59z$. If $z$ is large, a substantial fraction of the growth distribution $G(z'|z) = N(\mu, 0.67)$ lies above the upper limit $U$.
+
+```{r}
+z_examples <- c(-2.0, 0.5, 2.0, 3.5)
+z_dense <- seq(-3.0, 5.5, length.out = 500)
+
+plot(NULL, xlim = c(-3, 5.5), ylim = c(0, 0.7),
+     xlab = "Size at t+1 (z')", ylab = "Density",
+     main = "Growth distributions for different starting sizes")
+cols <- rainbow(length(z_examples))
+for (i in seq_along(z_examples)) {
+  zi <- z_examples[i]
+  mu <- data_list$grow_int + data_list$grow_z * zi
+  frac_lost <- 1 - pnorm(U, mu, data_list$grow_sd)
+  lines(z_dense, dnorm(z_dense, mu, data_list$grow_sd), lwd = 2, col = cols[i])
+  legend_text <- if (i == 1) {
+    sprintf("z=%.1f, lost=%.1f%%", zi, frac_lost * 100)
+  } else {
+    sprintf("z=%.1f, lost=%.1f%%", zi, frac_lost * 100)
+  }
+}
+abline(v = c(L, U), lty = 2, lwd = 2)
+legend("topright",
+       legend = sapply(z_examples, function(zi) {
+         mu <- data_list$grow_int + data_list$grow_z * zi
+         frac_lost <- 1 - pnorm(U, mu, data_list$grow_sd)
+         sprintf("z=%.1f, lost=%.1f%%", zi, frac_lost * 100)
+       }),
+       col = cols, lwd = 2, cex = 0.8)
+```
+
+## Method 1: No Correction
+
+```{r}
+monocarp_nocorr <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "det") %>%
+  define_kernel(
+    name          = "P",
+    formula       = s * (1 - p_b) * g,
+    family        = "CC",
+    s             = 1 / (1 + exp(-(surv_int + surv_z * z_1))),
+    p_b           = 1 / (1 + exp(-(flow_int + flow_z * z_1))),
+    g             = dnorm(z_2, grow_mu, grow_sd),
+    grow_mu       = grow_int + grow_z * z_1,
+    data_list     = data_list,
+    states        = list(c("z")),
+    uses_par_sets = FALSE,
+    evict_cor     = FALSE
+  ) %>%
+  define_kernel(
+    name          = "F",
+    formula       = p_b * b * p_r * c_0,
+    family        = "CC",
+    p_b           = 1 / (1 + exp(-(flow_int + flow_z * z_1))),
+    b             = exp(seed_int + seed_z * z_1),
+    c_0           = dnorm(z_2, rcsz_int, rcsz_sd),
+    data_list     = data_list,
+    states        = list(c("z")),
+    uses_par_sets = FALSE,
+    evict_cor     = FALSE
+  ) %>%
+  define_impl(
+    make_impl_args_list(
+      kernel_names = c("P", "F"),
+      int_rule     = rep("midpoint", 2),
+      state_start  = rep("z", 2),
+      state_end    = rep("z", 2)
+    )
+  ) %>%
+  define_domains(z = c(L, U, m)) %>%
+  define_pop_state(n_z = rep(1 / m, m)) %>%
+  make_ipm(iterations = 100)
+```
+
+## Diagnosing Eviction: Column Sums
+
+For the P kernel, each column $j$ should integrate (approximately) to the effective survival probability $s(z_j)(1 - p_b(z_j))$. If eviction is present, column sums will fall below the true survival probability.
+
+```{r}
+h <- (U - L) / m
+meshpts <- L + ((1:m) - 1/2) * h
+
+P_mat_nocorr <- monocarp_nocorr$sub_kernels$P
+col_sums_nocorr <- colSums(P_mat_nocorr)
+
+s_z <- function(z) 1 / (1 + exp(-(data_list$surv_int + data_list$surv_z * z)))
+p_bz <- function(z) 1 / (1 + exp(-(data_list$flow_int + data_list$flow_z * z)))
+true_survival <- s_z(meshpts) * (1 - p_bz(meshpts))
+
+plot(meshpts, col_sums_nocorr, type = "l", lwd = 2,
+     xlab = "Size z", ylab = "Column sum / Survival",
+     main = "P kernel column sums vs true survival")
+lines(meshpts, true_survival, lwd = 2, lty = 2, col = "red")
+legend("topleft", c("Column sum (no correction)", "True s(z)×(1-p_b(z))"),
+       lty = c(1, 2), col = c("black", "red"), lwd = 2)
+```
+
+```{r}
+deficit <- true_survival - col_sums_nocorr
+
+plot(meshpts, deficit, type = "l", lwd = 2, col = "red",
+     xlab = "Size z", ylab = "Probability lost",
+     main = "Eviction deficit by size")
+```
+
+The deficit is largest for individuals at the upper end of the size range, where the growth distribution extends beyond $U = 4.5$.
+
+## Method 2: Truncated Distributions
+
+The `truncated_distributions` method divides the growth density by the CDF within the domain bounds:
+
+$$
+G_{\text{trunc}}(z'|z) = \frac{G(z'|z)}{\Phi(U|\mu, \sigma) - \Phi(L|\mu, \sigma)}
+$$
+
+This ensures the growth distribution integrates to 1 over $[L, U]$.
+
+```{r}
+monocarp_trunc <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "det") %>%
+  define_kernel(
+    name          = "P",
+    formula       = s * (1 - p_b) * g,
+    family        = "CC",
+    s             = 1 / (1 + exp(-(surv_int + surv_z * z_1))),
+    p_b           = 1 / (1 + exp(-(flow_int + flow_z * z_1))),
+    g             = dnorm(z_2, grow_mu, grow_sd),
+    grow_mu       = grow_int + grow_z * z_1,
+    data_list     = data_list,
+    states        = list(c("z")),
+    uses_par_sets = FALSE,
+    evict_cor     = TRUE,
+    evict_fun     = truncated_distributions("norm", "g")
+  ) %>%
+  define_kernel(
+    name          = "F",
+    formula       = p_b * b * p_r * c_0,
+    family        = "CC",
+    p_b           = 1 / (1 + exp(-(flow_int + flow_z * z_1))),
+    b             = exp(seed_int + seed_z * z_1),
+    c_0           = dnorm(z_2, rcsz_int, rcsz_sd),
+    data_list     = data_list,
+    states        = list(c("z")),
+    uses_par_sets = FALSE,
+    evict_cor     = FALSE
+  ) %>%
+  define_impl(
+    make_impl_args_list(
+      kernel_names = c("P", "F"),
+      int_rule     = rep("midpoint", 2),
+      state_start  = rep("z", 2),
+      state_end    = rep("z", 2)
+    )
+  ) %>%
+  define_domains(z = c(L, U, m)) %>%
+  define_pop_state(n_z = rep(1 / m, m)) %>%
+  make_ipm(iterations = 100)
+
+P_mat_trunc <- monocarp_trunc$sub_kernels$P
+col_sums_trunc <- colSums(P_mat_trunc)
+```
+
+## Method 3: Discrete Extrema
+
+The `discrete_extrema` method redistributes lost probability mass to the boundary mesh points. For each column, if the column sum is less than expected, the deficit is added to the first or last row.
+
+```{r}
+monocarp_extrema <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "det") %>%
+  define_kernel(
+    name          = "P",
+    formula       = s * (1 - p_b) * g,
+    family        = "CC",
+    s             = 1 / (1 + exp(-(surv_int + surv_z * z_1))),
+    p_b           = 1 / (1 + exp(-(flow_int + flow_z * z_1))),
+    g             = dnorm(z_2, grow_mu, grow_sd),
+    grow_mu       = grow_int + grow_z * z_1,
+    data_list     = data_list,
+    states        = list(c("z")),
+    uses_par_sets = FALSE,
+    evict_cor     = TRUE,
+    evict_fun     = discrete_extrema("g", "z")
+  ) %>%
+  define_kernel(
+    name          = "F",
+    formula       = p_b * b * p_r * c_0,
+    family        = "CC",
+    p_b           = 1 / (1 + exp(-(flow_int + flow_z * z_1))),
+    b             = exp(seed_int + seed_z * z_1),
+    c_0           = dnorm(z_2, rcsz_int, rcsz_sd),
+    data_list     = data_list,
+    states        = list(c("z")),
+    uses_par_sets = FALSE,
+    evict_cor     = FALSE
+  ) %>%
+  define_impl(
+    make_impl_args_list(
+      kernel_names = c("P", "F"),
+      int_rule     = rep("midpoint", 2),
+      state_start  = rep("z", 2),
+      state_end    = rep("z", 2)
+    )
+  ) %>%
+  define_domains(z = c(L, U, m)) %>%
+  define_pop_state(n_z = rep(1 / m, m)) %>%
+  make_ipm(iterations = 100)
+
+P_mat_extrema <- monocarp_extrema$sub_kernels$P
+col_sums_extrema <- colSums(P_mat_extrema)
+```
+
+## Comparing Column Sums
+
+```{r}
+plot(meshpts, col_sums_nocorr, type = "l", lwd = 2,
+     xlab = "Size z", ylab = "Column sum",
+     main = "P kernel column sums under different corrections",
+     ylim = range(c(col_sums_nocorr, col_sums_trunc, col_sums_extrema, true_survival)))
+lines(meshpts, col_sums_trunc, lwd = 2, col = "blue")
+lines(meshpts, col_sums_extrema, lwd = 2, col = "green4")
+lines(meshpts, true_survival, lwd = 1, lty = 2)
+legend("topleft",
+       c("No correction", "Truncated distributions", "Discrete extrema", "True survival"),
+       col = c("black", "blue", "green4", "black"),
+       lty = c(1, 1, 1, 2), lwd = c(2, 2, 2, 1), cex = 0.8)
+```
+
+```{r}
+err_nocorr  <- max(abs(col_sums_nocorr - true_survival))
+err_trunc   <- max(abs(col_sums_trunc - true_survival))
+err_extrema <- max(abs(col_sums_extrema - true_survival))
+```
+
+```{r}
+#| echo: false
+cat("Max column sum error:\n")
+cat("  No correction:          ", signif(err_nocorr, 4), "\n")
+cat("  Truncated distributions:", signif(err_trunc, 4), "\n")
+cat("  Discrete extrema:       ", signif(err_extrema, 4), "\n")
+```
+
+## Effect on Lambda
+
+```{r}
+lam_nocorr  <- lambda(monocarp_nocorr)
+lam_trunc   <- lambda(monocarp_trunc)
+lam_extrema <- lambda(monocarp_extrema)
+```
+
+```{r}
+#| echo: false
+cat("Lambda values:\n")
+cat("  No correction:          ", round(lam_nocorr, 6), "\n")
+cat("  Truncated distributions:", round(lam_trunc, 6), "\n")
+cat("  Discrete extrema:       ", round(lam_extrema, 6), "\n")
+cat("\nDifference from no correction:\n")
+cat("  Truncated distributions:", signif(lam_trunc - lam_nocorr, 4), "\n")
+cat("  Discrete extrema:       ", signif(lam_extrema - lam_nocorr, 4), "\n")
+```
+
+## Effect of Domain Width
+
+A wider domain reduces eviction but increases computation. Let us examine how $\lambda$ changes with the upper limit.
+
+```{r}
+U_vals <- seq(3.5, 6.0, length.out = 25)
+lam_by_U_nocorr <- numeric(length(U_vals))
+lam_by_U_trunc  <- numeric(length(U_vals))
+
+for (i in seq_along(U_vals)) {
+  U_test <- U_vals[i]
+
+  ipm_nc <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "det") %>%
+    define_kernel(
+      name = "P", formula = s * (1 - p_b) * g, family = "CC",
+      s = 1 / (1 + exp(-(surv_int + surv_z * z_1))),
+      p_b = 1 / (1 + exp(-(flow_int + flow_z * z_1))),
+      g = dnorm(z_2, grow_mu, grow_sd),
+      grow_mu = grow_int + grow_z * z_1,
+      data_list = data_list, states = list(c("z")),
+      uses_par_sets = FALSE, evict_cor = FALSE
+    ) %>%
+    define_kernel(
+      name = "F", formula = p_b * b * p_r * c_0, family = "CC",
+      p_b = 1 / (1 + exp(-(flow_int + flow_z * z_1))),
+      b = exp(seed_int + seed_z * z_1),
+      c_0 = dnorm(z_2, rcsz_int, rcsz_sd),
+      data_list = data_list, states = list(c("z")),
+      uses_par_sets = FALSE, evict_cor = FALSE
+    ) %>%
+    define_impl(make_impl_args_list(
+      kernel_names = c("P", "F"), int_rule = rep("midpoint", 2),
+      state_start = rep("z", 2), state_end = rep("z", 2)
+    )) %>%
+    define_domains(z = c(L, U_test, m)) %>%
+    define_pop_state(n_z = rep(1 / m, m)) %>%
+    make_ipm(iterations = 100)
+
+  ipm_tc <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "det") %>%
+    define_kernel(
+      name = "P", formula = s * (1 - p_b) * g, family = "CC",
+      s = 1 / (1 + exp(-(surv_int + surv_z * z_1))),
+      p_b = 1 / (1 + exp(-(flow_int + flow_z * z_1))),
+      g = dnorm(z_2, grow_mu, grow_sd),
+      grow_mu = grow_int + grow_z * z_1,
+      data_list = data_list, states = list(c("z")),
+      uses_par_sets = FALSE,
+      evict_cor = TRUE, evict_fun = truncated_distributions("norm", "g")
+    ) %>%
+    define_kernel(
+      name = "F", formula = p_b * b * p_r * c_0, family = "CC",
+      p_b = 1 / (1 + exp(-(flow_int + flow_z * z_1))),
+      b = exp(seed_int + seed_z * z_1),
+      c_0 = dnorm(z_2, rcsz_int, rcsz_sd),
+      data_list = data_list, states = list(c("z")),
+      uses_par_sets = FALSE, evict_cor = FALSE
+    ) %>%
+    define_impl(make_impl_args_list(
+      kernel_names = c("P", "F"), int_rule = rep("midpoint", 2),
+      state_start = rep("z", 2), state_end = rep("z", 2)
+    )) %>%
+    define_domains(z = c(L, U_test, m)) %>%
+    define_pop_state(n_z = rep(1 / m, m)) %>%
+    make_ipm(iterations = 100)
+
+  lam_by_U_nocorr[i] <- lambda(ipm_nc)
+  lam_by_U_trunc[i]  <- lambda(ipm_tc)
+}
+
+plot(U_vals, lam_by_U_nocorr, type = "l", lwd = 2,
+     xlab = "Upper domain limit (U)", ylab = expression(lambda),
+     main = "Lambda vs domain upper limit",
+     ylim = range(c(lam_by_U_nocorr, lam_by_U_trunc)))
+lines(U_vals, lam_by_U_trunc, lwd = 2, col = "blue")
+legend("bottomright", c("No correction", "Truncated distributions"),
+       col = c("black", "blue"), lwd = 2)
+```
+
+With eviction correction, $\lambda$ is stable across a wide range of upper limits. Without correction, $\lambda$ converges only as the domain becomes wide enough to capture essentially all of the growth distribution.
+
+## When Does Eviction Matter?
+
+Eviction is most problematic when:
+
+- **Growth variance is large** relative to the domain width
+- **Domain bounds are tight** (close to the data range)
+- **Individuals near the boundaries** have high survival
+
+For this monocarp model, the growth standard deviation ($\sigma = 0.67$) is substantial relative to the domain width ($U - L = 7.15$), so eviction is noticeable but modest. For species with narrower size ranges or larger growth variance, the effect can be much larger.
+
+## Summary
+
+| Correction Method | Description | Column Sums | Lambda Effect |
+|---|---|---|---|
+| No correction | No adjustment | Below true survival near boundaries | Slightly biased low |
+| `truncated_distributions` | Divide by CDF within bounds | Match true survival | Corrected |
+| `discrete_extrema` | Redistribute lost mass to boundaries | Match true survival | Corrected |
+
+Both correction methods restore the column sums to match the true survival probability. `truncated_distributions` rescales the growth distribution, while `discrete_extrema` places lost mass at the domain edges. For most applications, `truncated_distributions` is preferred as it maintains the shape of the growth distribution.

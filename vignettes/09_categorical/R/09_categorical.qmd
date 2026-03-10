@@ -1,0 +1,484 @@
+---
+title: "Categorical Composition of IPMs"
+author: "Simon Frost"
+format:
+  html:
+    code-fold: false
+    toc: true
+    toc-depth: 2
+    number-sections: true
+---
+
+## Introduction
+
+Integral Projection Models can become complex: survival, growth, fecundity, seed banks, age structure, spatial patches. **Applied category theory** provides a principled framework for composing such models from smaller, reusable parts.
+
+This R companion vignette implements the core "lowering" functions (left/right Kan extensions, stratification, coarsening) in base R and demonstrates them on the *Ligustrum obtusifolium* model from [vignette 07](07_general_ipm.qmd). For full operadic composition via undirected wiring diagrams, see the Julia vignette which uses Catlab.jl.
+
+## Setup
+
+No external packages are required beyond base R.
+
+```{r}
+# No special packages needed
+```
+
+## The Ligustrum Model
+
+### Parameters
+
+```{r}
+ctrl <- list(
+  g_int     = 5.781,
+  g_slope   = 0.988,
+  g_sd      = 20.55699,
+  s_int     = -0.352,
+  s_slope   = 0.122,
+  s_slope_2 = -0.000213,
+  f_r_int   = -11.46,
+  f_r_slope = 0.0835,
+  f_s_int   = 2.6204,
+  f_s_slope = 0.01256,
+  f_d_mu    = 5.6655,
+  f_d_sd    = 2.0734,
+  e_p       = 0.15,
+  g_i       = 0.5067
+)
+
+cr <- list(
+  g_int     = 7.229,
+  g_slope   = 0.988,
+  g_sd      = 21.72262,
+  s_int     = 0.0209,
+  s_slope   = 0.0831,
+  s_slope_2 = -0.00012999,
+  f_r_int   = -11.46,
+  f_r_slope = 0.0835,
+  f_s_int   = 2.6204,
+  f_s_slope = 0.01256,
+  f_d_mu    = 5.6655,
+  f_d_sd    = 2.0734,
+  e_p       = 0.15,
+  g_i       = 0.5067
+)
+```
+
+### Domain and Vital Rates
+
+```{r}
+L <- 1.02
+U <- 624.0
+n <- 500
+
+# Meshpoints and step size (midpoint rule)
+h_val <- (U - L) / n
+z <- L + ((1:n) - 0.5) * h_val
+
+# Vital rate functions
+survival <- function(z, p) {
+  1 / (1 + exp(-(p$s_int + p$s_slope * z + p$s_slope_2 * z^2)))
+}
+
+growth <- function(z_prime, z, p) {
+  mu <- p$g_int + p$g_slope * z
+  ev <- pnorm(U, mu, p$g_sd) - pnorm(L, mu, p$g_sd)
+  ifelse(ev > 0, dnorm(z_prime, mu, p$g_sd) / ev, dnorm(z_prime, mu, p$g_sd))
+}
+
+repr_prob <- function(z, p) {
+  1 / (1 + exp(-(p$f_r_int + p$f_r_slope * z)))
+}
+
+seed_prod <- function(z, p) {
+  exp(p$f_s_int + p$f_s_slope * z)
+}
+
+offspring_size <- function(z_prime, p) {
+  d_mu <- p$f_d_mu
+  d_sd <- p$f_d_sd
+  ev <- pnorm(U, d_mu, d_sd) - pnorm(L, d_mu, d_sd)
+  ifelse(ev > 0, dnorm(z_prime, d_mu, d_sd) / ev, dnorm(z_prime, d_mu, d_sd))
+}
+```
+
+## Core Categorical Functions
+
+### Left Kan Extension: IPM → MPM
+
+The **left Kan extension** discretises a continuous kernel $K(z', z)$ into a matrix using the midpoint rule:
+
+$$A_{ij} = h \cdot K(z_i, z_j)$$
+
+```{r}
+left_kan_extension <- function(kernel_fn, lower, upper, n_bins) {
+  h <- (upper - lower) / n_bins
+  midpoints <- lower + ((1:n_bins) - 0.5) * h
+  A <- matrix(0, n_bins, n_bins)
+  for (j in 1:n_bins) {
+    for (i in 1:n_bins) {
+      A[i, j] <- h * kernel_fn(midpoints[i], midpoints[j])
+    }
+  }
+  list(A = A, midpoints = midpoints, h = h)
+}
+```
+
+### Right Kan Extension: MPM → IPM
+
+The **right Kan extension** constructs a piecewise-constant kernel from a matrix:
+
+$$K_{\mathrm{pw}}(z', z) = \frac{A_{ij}}{h} \quad \text{where } z \in B_j,\; z' \in B_i$$
+
+```{r}
+right_kan_extension <- function(A, z_min, h) {
+  n_bins <- nrow(A)
+  function(z_new, z) {
+    j <- pmin(pmax(ceiling((z - z_min) / h), 1), n_bins)
+    i <- pmin(pmax(ceiling((z_new - z_min) / h), 1), n_bins)
+    A[cbind(i, j)] / h
+  }
+}
+```
+
+### Stratification
+
+**Stratification** extends a local model to multiple spatial patches via a block-structured matrix:
+
+$$A_{\mathrm{strat}}[(p_{\mathrm{to}}, i),\, (p_{\mathrm{from}}, j)] = D[p_{\mathrm{to}}, p_{\mathrm{from}}] \cdot A_{\mathrm{local}}[i, j]$$
+
+```{r}
+stratify <- function(A_local, dispersal) {
+  n_bins <- nrow(A_local)
+  n_patches <- nrow(dispersal)
+  n_total <- n_bins * n_patches
+  A_strat <- matrix(0, n_total, n_total)
+  for (p_to in 1:n_patches) {
+    for (p_from in 1:n_patches) {
+      rows <- ((p_to - 1) * n_bins + 1):(p_to * n_bins)
+      cols <- ((p_from - 1) * n_bins + 1):(p_from * n_bins)
+      A_strat[rows, cols] <- dispersal[p_to, p_from] * A_local
+    }
+  }
+  A_strat
+}
+```
+
+### Coarsening via Pushforward
+
+**Coarsening** aggregates fine bins into coarse bins, preserving information from the finer grid:
+
+```{r}
+coarsen <- function(A, n_coarse) {
+  n_fine <- nrow(A)
+  stopifnot(n_fine %% n_coarse == 0)
+  bins_per_coarse <- n_fine %/% n_coarse
+
+  # Coarsening map: fine bin i → coarse bin
+  coarsening_map <- ((1:n_fine) - 1) %/% bins_per_coarse + 1
+
+  A_coarse <- matrix(0, n_coarse, n_coarse)
+  for (j_fine in 1:n_fine) {
+    c_j <- coarsening_map[j_fine]
+    for (i_fine in 1:n_fine) {
+      c_i <- coarsening_map[i_fine]
+      A_coarse[c_i, c_j] <- A_coarse[c_i, c_j] + A[i_fine, j_fine] / bins_per_coarse
+    }
+  }
+  A_coarse
+}
+```
+
+### Compose Kernels
+
+Sum sub-kernel functions additively (UWD evaluation without Catlab):
+
+```{r}
+compose_kernels <- function(sub_kernels, lower, upper, n_bins) {
+  h <- (upper - lower) / n_bins
+  midpoints <- lower + ((1:n_bins) - 0.5) * h
+  K <- matrix(0, n_bins, n_bins)
+  for (kfn in sub_kernels) {
+    for (j in 1:n_bins) {
+      for (i in 1:n_bins) {
+        K[i, j] <- K[i, j] + h * kfn(midpoints[i], midpoints[j])
+      }
+    }
+  }
+  K
+}
+```
+
+## Building the Ligustrum General IPM
+
+```{r}
+build_mega <- function(p) {
+  # CC: survival-growth (500×500)
+  cc <- matrix(0, n, n)
+  for (j in 1:n) {
+    s_j <- survival(z[j], p)
+    for (i in 1:n) {
+      cc[i, j] <- s_j * growth(z[i], z[j], p) * h_val
+    }
+  }
+
+  # CD: continuous → discrete (1×500)
+  cd <- repr_prob(z, p) * seed_prod(z, p) * p$g_i
+  cd <- matrix(cd, nrow = 1, ncol = n)
+
+  # DC: discrete → continuous (500×1)
+  dc <- p$e_p * offspring_size(z, p) * h_val
+  dc <- matrix(dc, nrow = n, ncol = 1)
+
+  # DD: discrete → discrete (1×1)
+  dd <- matrix(0, 1, 1)
+
+  # Assemble mega-kernel: ht first, then b
+  K <- rbind(
+    cbind(cc, dc),
+    cbind(cd, dd)
+  )
+  list(K = K, cc = cc, cd = cd, dc = dc, dd = dd)
+}
+
+ipm_ctrl <- build_mega(ctrl)
+ipm_cr <- build_mega(cr)
+
+lambda_ctrl <- Re(eigen(ipm_ctrl$K)$values[1])
+lambda_cr <- Re(eigen(ipm_cr$K)$values[1])
+```
+
+```{r}
+#| echo: false
+cat(sprintf("Control:  λ = %.4f  (published ≈ 1.22)\n", lambda_ctrl))
+cat(sprintf("CR:       λ = %.4f  (published ≈ 1.26)\n", lambda_cr))
+```
+
+## Operadic Composition (Conceptual)
+
+In the Julia vignette, we use Catlab.jl to define an **undirected wiring diagram** (UWD) that specifies how sub-processes share trait axes:
+
+```
+@relation (z, z_new) begin
+    survive_grow(z, z_new)
+    reproduce(z, z_new)
+end
+```
+
+This captures $K = P + F$ declaratively. In R, we achieve the same by passing a named list of sub-kernel functions to `compose_kernels`:
+
+```{r}
+P_kernel <- function(z_new, z) survival(z, ctrl) * growth(z_new, z, ctrl)
+F_kernel <- function(z_new, z) {
+  repr_prob(z, ctrl) * seed_prod(z, ctrl) * (1 - ctrl$g_i) *
+    ctrl$e_p * offspring_size(z_new, ctrl)
+}
+
+K_simple <- compose_kernels(
+  list(survive_grow = P_kernel, reproduce = F_kernel),
+  L, U, n
+)
+lambda_simple <- Re(eigen(K_simple)$values[1])
+```
+
+```{r}
+#| echo: false
+cat(sprintf("Simple IPM (P + F, no seed bank) λ = %.4f\n", lambda_simple))
+```
+
+## Left Kan Extension: Convergence
+
+```{r}
+# Reference at high resolution
+P_fn <- function(z_new, z) survival(z, ctrl) * growth(z_new, z, ctrl)
+ref <- left_kan_extension(P_fn, L, U, 500)
+lambda_ref <- Re(eigen(ref$A)$values[1])
+```
+
+```{r}
+#| echo: false
+cat("Convergence of λ for CC block (survival-growth):\n\n")
+cat(sprintf("  %7s │ %9s │ %15s\n", "n_bins", "λ", "|Δλ| from ref"))
+cat(sprintf(" %s┼%s┼%s\n", strrep("─", 8), strrep("─", 11), strrep("─", 17)))
+
+for (nb in c(5, 10, 20, 50, 100, 200, 500)) {
+  res <- left_kan_extension(P_fn, L, U, nb)
+  lam <- Re(eigen(res$A)$values[1])
+  delta <- abs(lam - lambda_ref)
+  marker <- if (nb == 500) " ← reference" else ""
+  cat(sprintf("  %5d │ %9.6f │ %14.2e%s\n", nb, lam, delta, marker))
+}
+```
+
+## Right Kan Extension: Round Trip
+
+```{r}
+# Discretise at n=20, then reconstruct
+res_20 <- left_kan_extension(P_fn, L, U, 20)
+K_pw <- right_kan_extension(res_20$A, L, res_20$h)
+```
+
+```{r}
+#| echo: false
+cat("Round trip: IPM → MPM(n=20) → piecewise IPM\n\n")
+cat(sprintf("  %18s │ %11s │ %11s │ %8s\n",
+            "(z', z)", "K_original", "K_piecewise", "|Δ|"))
+cat(sprintf(" %s┼%s┼%s┼%s\n",
+            strrep("─", 19), strrep("─", 13), strrep("─", 13), strrep("─", 9)))
+for (pair in list(c(50, 50), c(100, 200), c(300, 300), c(500, 400))) {
+  zn <- pair[1]; zv <- pair[2]
+  k_orig <- P_fn(zn, zv)
+  k_pw <- K_pw(zn, zv)
+  delta <- abs(k_orig - k_pw)
+  cat(sprintf("  (%5.0f, %5.0f)     │ %11.6f │ %11.6f │ %8.6f\n",
+              zn, zv, k_orig, k_pw, delta))
+}
+```
+
+## Adjunction Errors
+
+```{r}
+adjunction_errors <- function(kernel_fn, lower, upper, nb) {
+  res <- left_kan_extension(kernel_fn, lower, upper, nb)
+  A <- res$A
+  K_pw <- right_kan_extension(A, lower, res$h)
+  res_rt <- left_kan_extension(K_pw, lower, upper, nb)
+  A_rt <- res_rt$A
+
+  # Unit error
+  unit_err <- norm(A_rt - A, "F") / norm(A, "F")
+
+  # Counit error (L2 on fine grid)
+  n_test <- 200
+  h_test <- (upper - lower) / n_test
+  test_pts <- lower + ((1:n_test) - 0.5) * h_test
+  counit_err <- 0
+  for (zv in test_pts) {
+    for (zn in test_pts) {
+      counit_err <- counit_err + (K_pw(zn, zv) - kernel_fn(zn, zv))^2
+    }
+  }
+  counit_err <- sqrt(counit_err * h_test^2)
+
+  lam <- Re(eigen(A)$values[1])
+  lambda_err <- abs(lam - lambda_ref)
+
+  list(unit = unit_err, counit = counit_err, lambda_err = lambda_err)
+}
+```
+
+```{r}
+#| echo: false
+cat(sprintf("  %7s │ %11s │ %11s │ %11s\n",
+            "n_bins", "Unit (η)", "Counit (ε)", "|λ - λ_ref|"))
+cat(sprintf(" %s┼%s┼%s┼%s\n",
+            strrep("─", 8), strrep("─", 13), strrep("─", 13), strrep("─", 12)))
+for (nb in c(5, 10, 20, 50, 100, 200)) {
+  errs <- adjunction_errors(P_fn, L, U, nb)
+  cat(sprintf("  %5d │ %11.2e │ %11.2e │ %10.2e\n",
+              nb, errs$unit, errs$counit, errs$lambda_err))
+}
+
+cat("\nUnit η ≈ 0:  midpoint rule is self-consistent under round-trip\n")
+cat("Counit ε → 0: piecewise IPM converges to original as bins refine\n")
+```
+
+## Stratification: Spatial Extension
+
+```{r}
+# Symmetric 2-patch dispersal
+D_sym <- matrix(c(0.9, 0.1, 0.1, 0.9), 2, 2)
+K_strat_sym <- stratify(ipm_ctrl$cc, D_sym)
+lambda_strat_sym <- Re(eigen(K_strat_sym)$values[1])
+```
+
+```{r}
+#| echo: false
+cat("Symmetric dispersal (90% stay, 10% move):\n")
+cat(sprintf("  Single-patch λ = %.6f\n", lambda_ref))
+cat(sprintf("  Two-patch λ    = %.6f\n", lambda_strat_sym))
+cat(sprintf("  Ratio: %.6f  (≈ 1.0 for identical patches)\n",
+            lambda_strat_sym / lambda_ref))
+```
+
+```{r}
+# Asymmetric dispersal: source-sink dynamics
+D_asym <- matrix(c(0.95, 0.05, 0.20, 0.80), 2, 2)
+K_strat_asym <- stratify(ipm_ctrl$cc, D_asym)
+lambda_strat_asym <- Re(eigen(K_strat_asym)$values[1])
+```
+
+```{r}
+#| echo: false
+cat(sprintf("Asymmetric dispersal (source-sink):\n  Two-patch λ = %.6f\n",
+            lambda_strat_asym))
+```
+
+## Coarsening via Pushforward
+
+```{r}
+# Fine: 100 bins, coarse: 20 bins
+res_fine <- left_kan_extension(P_fn, L, U, 100)
+lambda_fine <- Re(eigen(res_fine$A)$values[1])
+
+A_coarsened <- coarsen(res_fine$A, 20)
+lambda_coarsened <- Re(eigen(A_coarsened)$values[1])
+
+res_direct_20 <- left_kan_extension(P_fn, L, U, 20)
+lambda_direct_20 <- Re(eigen(res_direct_20$A)$values[1])
+```
+
+```{r}
+#| echo: false
+cat(sprintf("Fine (n=100):              λ = %.6f\n", lambda_fine))
+cat(sprintf("Coarsened via Lan (n=20):  λ = %.6f\n", lambda_coarsened))
+cat(sprintf("Direct at n=20:            λ = %.6f\n", lambda_direct_20))
+cat(sprintf("Reference (n=500):         λ = %.6f\n", lambda_ref))
+```
+
+## Commutation: Discretise then Stratify = Stratify then Discretise
+
+```{r}
+n_comm <- 50
+
+# Path 1: discretise first, then stratify
+res_p1 <- left_kan_extension(P_fn, L, U, n_comm)
+A_path1 <- stratify(res_p1$A, D_sym)
+
+# Path 2: stratify the continuous kernel, then discretise
+z_comm <- L + ((1:n_comm) - 0.5) * (U - L) / n_comm
+h_comm <- (U - L) / n_comm
+n_patches <- 2
+n_total <- n_comm * n_patches
+A_path2 <- matrix(0, n_total, n_total)
+for (p_from in 1:n_patches) {
+  for (p_to in 1:n_patches) {
+    for (j in 1:n_comm) {
+      for (i in 1:n_comm) {
+        row <- (p_to - 1) * n_comm + i
+        col <- (p_from - 1) * n_comm + j
+        A_path2[row, col] <- h_comm * D_sym[p_to, p_from] * P_fn(z_comm[i], z_comm[j])
+      }
+    }
+  }
+}
+
+comm_error <- norm(A_path1 - A_path2, "F") / norm(A_path1, "F")
+```
+
+```{r}
+#| echo: false
+cat(sprintf("Commutation: ||Path1 - Path2|| / ||Path1|| = %.2e\n", comm_error))
+cat(sprintf("Commutes: %s\n", comm_error < 1e-12))
+```
+
+## Summary of Categorical Constructions
+
+| Construction | Category theory | R function | What it does |
+|---|---|---|---|
+| Kernel composition | Operadic algebra | `compose_kernels` | Sum sub-kernels sharing trait axes |
+| IPM → MPM | Left Kan extension | `left_kan_extension` | Discretise kernel → matrix |
+| MPM → IPM | Right Kan extension | `right_kan_extension` | Matrix → piecewise kernel |
+| Spatial model | Pullback (stratification) | `stratify` | Local dynamics + dispersal |
+| Bin aggregation | Pushforward | `coarsen` | Fine → coarse matrix |
+
+For full UWD specification and `FinFunction`-based coarsening, see the Julia vignette which uses Catlab.jl. The R implementations here use the same mathematical operations but without the formal categorical type system.

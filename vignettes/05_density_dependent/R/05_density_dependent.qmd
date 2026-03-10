@@ -1,0 +1,279 @@
+---
+title: "Density-Dependent IPMs"
+author: "Simon Frost"
+format:
+  html:
+    code-fold: false
+    toc: true
+---
+
+## Overview
+
+In density-dependent (DD) IPMs, vital rates depend on the current population size $N_t = \int n(z, t) \, dz$. The kernel $K(z', z; N_t)$ is rebuilt at each time step, so the population dynamics are nonlinear.
+
+This vignette models **Soay sheep** with density-dependent survival, recruitment probability, and recruit size, following Ellner, Childs & Rees (Chapter 5). The key goal is to find the **equilibrium population size** $\bar{N}$ where $\lambda(N) = 1$.
+
+## Setup
+
+```{r}
+library(ipmr)
+```
+
+## Parameters
+
+Density-dependent parameters have an additional `Nt` term that reduces the vital rate as population size increases.
+
+```{r}
+data_list <- list(
+  # Survival (density dependent: surv_Nt < 0)
+  surv_int  =  1.06,
+  surv_z    =  2.09,
+  surv_Nt   = -0.018,
+  # Growth (NOT density dependent)
+  grow_int  =  1.41,
+  grow_z    =  0.557,
+  grow_sd   =  0.0799,
+  # Reproduction probability (NOT density dependent)
+  repr_int  = -7.23,
+  repr_z    =  2.60,
+  # Recruitment probability (density dependent)
+  recr_int  =  4.43,
+  recr_Nt   = -0.00919,
+  # Recruit size (density dependent)
+  rcsz_int  =  0.540,
+  rcsz_z    =  0.710,
+  rcsz_Nt   = -0.000642,
+  rcsz_sd   =  0.159
+)
+```
+
+## Domain
+
+```{r}
+L <- 0.5
+U <- 3.8
+m <- 165
+```
+
+## Density-Dependent Vital Rates
+
+```{r}
+s_z <- function(z, Nt) 1 / (1 + exp(-(data_list$surv_int + data_list$surv_z * z + data_list$surv_Nt * Nt)))
+g_z1z <- function(z_prime, z) dnorm(z_prime, data_list$grow_int + data_list$grow_z * z, data_list$grow_sd)
+pb_z <- function(z) 1 / (1 + exp(-(data_list$repr_int + data_list$repr_z * z)))
+pr_z <- function(Nt) 1 / (1 + exp(-(data_list$recr_int + data_list$recr_Nt * Nt)))
+c_z1z <- function(z_prime, z, Nt) dnorm(z_prime, data_list$rcsz_int + data_list$rcsz_z * z + data_list$rcsz_Nt * Nt, data_list$rcsz_sd)
+```
+
+### Visualize DD Effects
+
+```{r}
+h <- (U - L) / m
+meshpts <- L + ((1:m) - 1/2) * h
+N_vals <- c(50, 200, 323, 450)
+z_plot <- seq(1.5, 3.5, length.out = 100)
+cols <- rainbow(length(N_vals))
+
+par(mfrow = c(1, 2))
+
+plot(NULL, xlim = range(z_plot), ylim = c(0, 1),
+     xlab = "Size", ylab = "s(z)", main = "Survival vs size at different N")
+for (i in seq_along(N_vals)) {
+  lines(z_plot, sapply(z_plot, s_z, Nt = N_vals[i]), lwd = 2, col = cols[i])
+}
+legend("topleft", paste("N =", N_vals), col = cols, lwd = 2, cex = 0.8)
+
+N_range <- seq(0, 500, length.out = 100)
+plot(N_range, sapply(N_range, pr_z), type = "l", lwd = 2,
+     xlab = "N", ylab = expression(p[r](N)),
+     main = "Recruitment probability vs N")
+par(mfrow = c(1, 1))
+```
+
+## Building the DD Kernel (Manual Iteration)
+
+For the density-dependent model, the kernel must be rebuilt at each time step based on the current population. We first build a function that constructs the kernel matrix at a given population density.
+
+```{r}
+build_K <- function(Nt) {
+  P <- matrix(0, m, m)
+  F_mat <- matrix(0, m, m)
+  for (j in 1:m) {
+    for (i in 1:m) {
+      P[i, j] <- s_z(meshpts[j], Nt) * g_z1z(meshpts[i], meshpts[j]) * h
+      F_mat[i, j] <- 0.5 * s_z(meshpts[j], Nt) * pb_z(meshpts[j]) *
+        pr_z(Nt) * c_z1z(meshpts[i], meshpts[j], Nt) * h
+    }
+  }
+  return(P + F_mat)
+}
+```
+
+## Lambda as a Function of Population Size
+
+At the equilibrium population size $\bar{N}$, the asymptotic growth rate $\lambda(\bar{N}) = 1$. We can compute $\lambda(N)$ for a range of $N$ values.
+
+```{r}
+lambda_at_N <- function(N) {
+  K <- build_K(N)
+  Re(eigen(K)$values[1])
+}
+
+N_test <- seq(100, 500, length.out = 50)
+lam_test <- sapply(N_test, lambda_at_N)
+
+plot(N_test, lam_test, type = "l", lwd = 2,
+     xlab = "Total population N", ylab = expression(lambda(N)),
+     main = "Growth rate vs population size")
+abline(h = 1, col = "red", lty = 2, lwd = 2)
+legend("topright", c(expression(lambda(N)), expression(lambda == 1)),
+       lty = c(1, 2), col = c("black", "red"), lwd = 2)
+```
+
+## Finding the Equilibrium
+
+The equilibrium $\bar{N}$ is the population size where $\lambda(N) = 1$. We find it using `uniroot`.
+
+```{r}
+root_fn <- function(N) lambda_at_N(N) - 1.0
+result <- uniroot(root_fn, interval = c(200, 400), tol = 1e-6)
+N_eq <- result$root
+lam_eq <- lambda_at_N(N_eq)
+```
+
+```{r}
+#| echo: false
+cat("Equilibrium population: N̄ =", round(N_eq, 1), "females\n")
+cat("Lambda at equilibrium:", round(lam_eq, 6), "\n")
+```
+
+## Population Trajectories
+
+We can iterate the DD-IPM from different starting population sizes to see convergence to the equilibrium.
+
+```{r}
+iterate_dd <- function(N0, n_steps) {
+  n_t <- rep(N0 / (m * h), m)
+  Nt_series <- sum(n_t) * h
+
+  for (t in 1:n_steps) {
+    Nt <- sum(n_t) * h
+    K <- build_K(Nt)
+    n_t <- K %*% n_t
+    Nt_series <- c(Nt_series, sum(n_t) * h)
+  }
+  return(Nt_series)
+}
+
+N0_vals <- c(50, 150, 250, 350, 450)
+n_steps <- 20
+
+plot(NULL, xlim = c(0, n_steps), ylim = c(0, 500),
+     xlab = "Time step", ylab = "Total population N",
+     main = "DD-IPM trajectories from different starting sizes")
+cols <- rainbow(length(N0_vals))
+for (i in seq_along(N0_vals)) {
+  Nt <- iterate_dd(N0_vals[i], n_steps)
+  lines(0:n_steps, Nt, lwd = 2, col = cols[i])
+}
+abline(h = N_eq, lty = 2, lwd = 2)
+legend("topright",
+       c(paste("N₀ =", N0_vals), paste("Equilibrium ≈", round(N_eq))),
+       col = c(cols, "black"), lty = c(rep(1, length(N0_vals)), 2),
+       lwd = 2, cex = 0.7)
+```
+
+All trajectories converge to the same equilibrium, regardless of starting population size.
+
+## Using ipmr with DD
+
+We can also build this model using the `ipmr` pipeline with `di_dd = "dd"`. In density-dependent models, `sum(n_z_t)` provides the total population size at each time step.
+
+```{r}
+dd_ipm <- init_ipm(sim_gen = "simple", di_dd = "dd", det_stoch = "det") %>%
+  define_kernel(
+    name          = "P",
+    formula       = s * g,
+    family        = "CC",
+    s             = 1 / (1 + exp(-(surv_int + surv_z * z_1 + surv_Nt * sum(n_z_t) * d_z))),
+    g             = dnorm(z_2, grow_mu, grow_sd),
+    grow_mu       = grow_int + grow_z * z_1,
+    data_list     = data_list,
+    states        = list(c("z")),
+    uses_par_sets = FALSE,
+    evict_cor     = FALSE
+  ) %>%
+  define_kernel(
+    name          = "F",
+    formula       = 0.5 * s * pb_pr * c_z1z,
+    family        = "CC",
+    s             = 1 / (1 + exp(-(surv_int + surv_z * z_1 + surv_Nt * sum(n_z_t) * d_z))),
+    pb_pr         = (1 / (1 + exp(-(repr_int + repr_z * z_1)))) *
+                    (1 / (1 + exp(-(recr_int + recr_Nt * sum(n_z_t) * d_z)))),
+    c_z1z         = dnorm(z_2, rcsz_mu, rcsz_sd),
+    rcsz_mu       = rcsz_int + rcsz_z * z_1 + rcsz_Nt * sum(n_z_t) * d_z,
+    data_list     = data_list,
+    states        = list(c("z")),
+    uses_par_sets = FALSE,
+    evict_cor     = FALSE
+  ) %>%
+  define_impl(
+    make_impl_args_list(
+      kernel_names = c("P", "F"),
+      int_rule     = rep("midpoint", 2),
+      state_start  = rep("z", 2),
+      state_end    = rep("z", 2)
+    )
+  ) %>%
+  define_domains(z = c(L, U, m)) %>%
+  define_pop_state(n_z = rep(50 / (m * h), m)) %>%
+  make_ipm(iterate = TRUE, iterations = 30, normalize_pop_size = FALSE)
+```
+
+```{r}
+total_pop <- sapply(dd_ipm$pop_state$n_z, function(x) sum(x) * h)
+all_lambdas <- lambda(dd_ipm, type_lambda = "all")
+
+par(mfrow = c(1, 2))
+plot(total_pop, type = "l", lwd = 2,
+     xlab = "Time step", ylab = "Total population N",
+     main = "DD-IPM via ipmr")
+abline(h = N_eq, col = "red", lty = 2, lwd = 2)
+
+plot(all_lambdas, type = "l", lwd = 2,
+     xlab = "Time step", ylab = expression(lambda(t)),
+     main = "Per-step growth rate (DD model)")
+abline(h = 1, col = "red", lty = 2, lwd = 2)
+par(mfrow = c(1, 1))
+```
+
+## Equilibrium Size Distribution
+
+```{r}
+n_eq <- rep(N_eq / (m * h), m)
+for (i in 1:50) {
+  Nt <- sum(n_eq) * h
+  K_eq <- build_K(Nt)
+  n_eq <- K_eq %*% n_eq
+}
+
+n_eq_norm <- n_eq / sum(n_eq)
+
+plot(meshpts, n_eq_norm, type = "l", lwd = 2,
+     xlab = "Log body mass", ylab = "Proportion",
+     main = paste0("Equilibrium size distribution (N̄ ≈ ", round(N_eq), ")"))
+polygon(c(meshpts, rev(meshpts)),
+        c(n_eq_norm, rep(0, m)),
+        col = adjustcolor("blue", alpha.f = 0.3), border = NA)
+lines(meshpts, n_eq_norm, lwd = 2)
+```
+
+## Summary
+
+In this vignette we:
+
+1. Built a density-dependent IPM where survival, recruitment, and recruit size decrease with population size
+2. Computed $\lambda(N)$ across a range of population sizes
+3. Found the equilibrium population $\bar{N} \approx 323$ females where $\lambda = 1$
+4. Demonstrated convergence from multiple starting conditions
+5. Used both manual iteration and the `ipmr` DD interface with `sum(n_z_t) * d_z`

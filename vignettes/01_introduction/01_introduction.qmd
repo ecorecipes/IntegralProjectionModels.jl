@@ -1,0 +1,292 @@
+---
+title: "Introduction to Integral Projection Models"
+author: "Simon Frost"
+format:
+  html:
+    code-fold: false
+    toc: true
+engine: julia
+---
+
+## Overview
+
+This vignette introduces **Integral Projection Models (IPMs)** using the classic monocarpic perennial *Oenothera glazioviana* (evening primrose) example from Ellner, Childs & Rees. We construct a simple, density-independent, deterministic IPM, compute the asymptotic growth rate $\lambda$, and examine the stable size distribution.
+
+An IPM tracks the size distribution $n(z, t)$ of a structured population. The core equation is:
+
+$$
+n(z', t+1) = \int_{L}^{U} K(z', z) \, n(z, t) \, dz
+$$
+
+where $K(z', z) = P(z', z) + F(z', z)$ is the projection kernel, composed of a survival-growth kernel $P$ and a fecundity kernel $F$.
+
+## Setup
+
+```{julia}
+using IntegralProjectionModels
+using Distributions
+using LinearAlgebra
+using Plots
+```
+
+## The Monocarp Model
+
+*Oenothera* is a monocarpic perennial: plants grow vegetatively for several years, then flower once and die. Size is measured on a log scale. The parameters come from Kachi & Hirose (1985) and Rees & Rose (2002).
+
+### Parameters
+
+```{julia}
+# Survival (logistic regression)
+surv_int = -0.65
+surv_z = 0.75
+
+# Flowering probability (logistic regression)
+flow_int = -18.0
+flow_z = 6.9
+
+# Growth (linear model with normal errors)
+grow_int = 0.96
+grow_z = 0.59
+grow_sd = 0.67
+
+# Recruit size distribution
+rcsz_int = -0.08
+rcsz_sd = 0.76
+
+# Seed production (Poisson GLM, log link)
+seed_int = 1.0
+seed_z = 2.2
+
+# Establishment probability
+p_r = 0.007
+```
+
+### Domain
+
+The domain spans the range of log sizes, with bounds set slightly beyond the observed data range to minimize eviction (loss of individuals outside the domain).
+
+```{julia}
+L = -2.65
+U = 4.5
+m = 250
+
+domain = ContinuousDomain(L, U, m)
+z = meshpoints(domain)
+h = step_size(domain)
+```
+
+### Vital Rate Functions
+
+**Survival**: logistic function of size.
+
+```{julia}
+s_z(z) = 1.0 / (1.0 + exp(-(surv_int + surv_z * z)))
+```
+
+**Flowering probability**: logistic function of size. Since *Oenothera* is monocarpic, flowering individuals die after reproduction.
+
+```{julia}
+p_bz(z) = 1.0 / (1.0 + exp(-(flow_int + flow_z * z)))
+```
+
+**Growth**: transition from size $z$ to $z'$ follows a normal distribution.
+
+```{julia}
+G_z1z(z_prime, z) = pdf(Normal(grow_int + grow_z * z, grow_sd), z_prime)
+```
+
+**Seed production**: exponential function of size (Poisson GLM on log scale).
+
+```{julia}
+b_z(z) = exp(seed_int + seed_z * z)
+```
+
+**Recruit size distribution**: normal, independent of parent size.
+
+```{julia}
+c_0z1(z_prime) = pdf(Normal(rcsz_int, rcsz_sd), z_prime)
+```
+
+### Kernel Construction
+
+The **P kernel** (survival-growth) describes the probability that an individual of size $z$ survives, does *not* flower, and grows to size $z'$:
+
+$$
+P(z', z) = s(z) \cdot (1 - p_b(z)) \cdot G(z'|z)
+$$
+
+The **F kernel** (fecundity) describes the production of new recruits of size $z'$ from flowering individuals of size $z$:
+
+$$
+F(z', z) = p_b(z) \cdot b(z) \cdot p_r \cdot c_0(z')
+$$
+
+```{julia}
+# Combined survival for P kernel: survive AND don't flower
+P_survival(z) = s_z(z) * (1.0 - p_bz(z))
+
+# Fecundity function: flowering × seeds × establishment × recruit size
+function F_z1z(z_prime, z)
+    return p_bz(z) * b_z(z) * p_r * c_0z1(z_prime)
+end
+
+# Build kernels
+P = PKernel(CustomVitalRate(P_survival), CustomVitalRate(G_z1z), domain)
+F = FKernel(CustomVitalRate(F_z1z), domain)
+K = P + F
+```
+
+### Materialize and Inspect the Kernel
+
+The `materialize` function discretizes the continuous kernel using the midpoint rule, producing an $m \times m$ matrix.
+
+```{julia}
+K_matrix = materialize(K)
+P_matrix = materialize(P)
+F_matrix = materialize(F)
+```
+
+```{julia}
+#| echo: false
+println("Kernel matrix size: ", size(K_matrix))
+println("K = P + F check: ", maximum(abs.(K_matrix - P_matrix - F_matrix)))
+```
+
+### Visualize the Kernel
+
+```{julia}
+heatmap(z, z, K_matrix,
+    xlabel="Size at time t",
+    ylabel="Size at time t+1",
+    title="IPM Kernel K(z', z)",
+    color=:viridis)
+```
+
+```{julia}
+p1 = heatmap(z, z, P_matrix, title="P kernel (survival-growth)",
+    xlabel="Size (t)", ylabel="Size (t+1)", color=:viridis)
+p2 = heatmap(z, z, F_matrix, title="F kernel (fecundity)",
+    xlabel="Size (t)", ylabel="Size (t+1)", color=:viridis)
+plot(p1, p2, layout=(1, 2), size=(900, 400))
+```
+
+## Eigenanalysis
+
+The asymptotic growth rate $\lambda$ is the dominant eigenvalue of the kernel matrix $K$. The stable size distribution is the corresponding right eigenvector, and the reproductive value is the left eigenvector.
+
+```{julia}
+n0 = uniform_population(domain)
+prob = IPMProblem(K, domain, n0, (0, 100))
+sol = solve(prob, EigenAnalysis())
+
+λ = lambda(sol)
+```
+
+```{julia}
+#| echo: false
+println("Asymptotic growth rate (λ): ", λ)
+```
+
+### Stable Size Distribution
+
+The stable size distribution $w(z)$ is the right eigenvector of $K$, normalized to sum to 1. It gives the proportional distribution of sizes in the population at the stable state.
+
+```{julia}
+w = stable_distribution(sol)
+
+plot(z, w,
+    xlabel="Size (log scale)",
+    ylabel="Proportion",
+    title="Stable size distribution",
+    label="w(z)",
+    linewidth=2,
+    fill=(0, 0.3, :blue))
+```
+
+### Reproductive Value
+
+The reproductive value $v(z)$ is the left eigenvector. It gives the expected contribution of an individual of size $z$ to future population growth, relative to a newborn.
+
+```{julia}
+v = reproductive_value(sol)
+
+plot(z, v,
+    xlabel="Size (log scale)",
+    ylabel="Reproductive value",
+    title="Reproductive value v(z)",
+    label="v(z)",
+    linewidth=2,
+    color=:red)
+```
+
+### Mean Size at Stable Distribution
+
+```{julia}
+mean_z = sum(w .* z)
+```
+
+```{julia}
+#| echo: false
+println("Mean size (log scale) at stable distribution: ", round(mean_z, digits=3))
+```
+
+## Population Projection
+
+We can also solve the IPM by direct iteration to see the transient dynamics before the population converges to the stable growth rate.
+
+```{julia}
+sol_iter = solve(prob, DirectIteration())
+```
+
+```{julia}
+# Plot per-step growth rates converging to λ
+plot(sol_iter.lambdas,
+    xlabel="Time step",
+    ylabel="λ(t)",
+    title="Convergence of growth rate to λ",
+    label="λ(t)",
+    linewidth=2)
+hline!([λ], label="Asymptotic λ", linestyle=:dash, color=:red)
+```
+
+```{julia}
+# Total population trajectory (log scale)
+total_pop = [sum(u) for u in sol_iter.u]
+
+plot(0:100, log.(total_pop),
+    xlabel="Time step",
+    ylabel="log N(t)",
+    title="Population trajectory",
+    label="log N(t)",
+    linewidth=2)
+```
+
+## Vital Rate Diagnostics
+
+Let us visualize the vital rates across the size domain.
+
+```{julia}
+p1 = plot(z, s_z.(z), xlabel="Size", ylabel="Probability",
+    title="Survival s(z)", label=false, linewidth=2)
+p2 = plot(z, p_bz.(z), xlabel="Size", ylabel="Probability",
+    title="Flowering p_b(z)", label=false, linewidth=2, color=:orange)
+p3 = plot(z, b_z.(z), xlabel="Size", ylabel="Seeds",
+    title="Seed production b(z)", label=false, linewidth=2, color=:green)
+p4 = plot(z, P_survival.(z), xlabel="Size", ylabel="Probability",
+    title="Effective survival\ns(z)×(1-p_b(z))", label=false, linewidth=2, color=:purple)
+
+plot(p1, p2, p3, p4, layout=(2, 2), size=(800, 600))
+```
+
+## Summary
+
+In this vignette we:
+
+1. Defined vital rate functions for a monocarpic perennial (*Oenothera*)
+2. Constructed P (survival-growth) and F (fecundity) kernels
+3. Discretized the kernel using the midpoint rule (250 mesh points on $[-2.65, 4.5]$)
+4. Computed the asymptotic growth rate $\lambda$ via eigenanalysis
+5. Examined the stable size distribution and reproductive value
+6. Projected population dynamics via direct iteration
+
+The next vignette covers an iteroparous species (Soay sheep) with a different life history structure.

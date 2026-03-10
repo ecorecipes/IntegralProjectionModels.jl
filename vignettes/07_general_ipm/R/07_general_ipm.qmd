@@ -1,0 +1,340 @@
+---
+title: "General IPM with Seed Bank"
+author: "Simon Frost"
+format:
+  html:
+    code-fold: false
+    toc: true
+---
+
+## Overview
+
+A **general IPM** models populations with multiple state variables — both continuous (e.g., size) and discrete (e.g., seed bank, dormancy stage). The kernel becomes a block-structured **mega-kernel** with transitions between all state combinations.
+
+This vignette models *Ligustrum obtusifolium* (border privet) with a discrete seed bank and continuous height, following Levin et al. (2019). We compare two treatments: **control** and **crown removal (CR)**.
+
+## Setup
+
+```{r}
+library(ipmr)
+```
+
+## The Ligustrum Model
+
+The population has two states:
+
+- **Height** (`ht`): continuous, measured in cm — domain $[1.02, 624]$
+- **Seed bank** (`b`): discrete, a single pool of seeds in the soil
+
+The mega-kernel has four blocks:
+
+$$
+K = \begin{pmatrix}
+K_{CC} & K_{DC} \\
+K_{CD} & K_{DD}
+\end{pmatrix}
+$$
+
+where:
+
+- $K_{CC}$ (continuous → continuous): survival-growth (P kernel)
+- $K_{CD}$ (continuous → discrete): seeds entering the seed bank
+- $K_{DC}$ (discrete → continuous): seedlings emerging from the seed bank
+- $K_{DD}$ (discrete → discrete): seeds staying in the seed bank (= 0 in this model)
+
+## Parameters
+
+### Control Treatment
+
+```{r}
+ctrl <- list(
+  g_int     = 5.781,
+  g_slope   = 0.988,
+  g_sd      = 20.55699,
+  s_int     = -0.352,
+  s_slope   = 0.122,
+  s_slope_2 = -0.000213,
+  f_r_int   = -11.46,
+  f_r_slope = 0.0835,
+  f_s_int   = 2.6204,
+  f_s_slope = 0.01256,
+  f_d_mu    = 5.6655,
+  f_d_sd    = 2.0734,
+  e_p       = 0.15,
+  g_i       = 0.5067
+)
+```
+
+### CR Treatment
+
+```{r}
+cr <- list(
+  g_int     = 7.229,
+  g_slope   = 0.988,
+  g_sd      = 21.72262,
+  s_int     = 0.0209,
+  s_slope   = 0.0831,
+  s_slope_2 = -0.00012999,
+  f_r_int   = -11.46,
+  f_r_slope = 0.0835,
+  f_s_int   = 2.6204,
+  f_s_slope = 0.01256,
+  f_d_mu    = 5.6655,
+  f_d_sd    = 2.0734,
+  e_p       = 0.15,
+  g_i       = 0.5067
+)
+```
+
+## Domain
+
+```{r}
+L <- 1.02
+U <- 624.0
+n <- 500
+```
+
+## Building the General IPM
+
+In `ipmr`, a general model uses `sim_gen = "general"`. The `family` argument specifies the transition type: `"CC"` (continuous→continuous), `"CD"` (continuous→discrete), `"DC"` (discrete→continuous), or `"DD"` (discrete→discrete). Note that in general models, the mesh width `d_ht` must be explicitly included in the formula.
+
+We define a helper function to build both treatments with the same structure.
+
+```{r}
+inv_logit_2 <- function(int, slope, slope_2, z) {
+  1 / (1 + exp(-(int + slope * z + slope_2 * z^2)))
+}
+
+build_ligustrum <- function(params) {
+  states <- list(c("ht", "b"))
+
+  init_ipm(sim_gen = "general", di_dd = "di", det_stoch = "det") %>%
+    # CC: survival-growth (height → height)
+    define_kernel(
+      name      = "P",
+      formula   = s * g * d_ht,
+      family    = "CC",
+      s         = inv_logit_2(s_int, s_slope, s_slope_2, ht_1),
+      g         = dnorm(ht_2, g_mu, g_sd),
+      g_mu      = g_int + g_slope * ht_1,
+      data_list = params,
+      states    = states,
+      evict_cor = TRUE,
+      evict_fun = truncated_distributions("norm", "g")
+    ) %>%
+    # CD: continuous → discrete (seeds entering bank)
+    define_kernel(
+      name      = "go_discrete",
+      formula   = f_r * f_s * g_i,
+      family    = "CD",
+      f_r       = 1 / (1 + exp(-(f_r_int + f_r_slope * ht_1))),
+      f_s       = exp(f_s_int + f_s_slope * ht_1),
+      data_list = params,
+      states    = states,
+      evict_cor = FALSE
+    ) %>%
+    # DD: discrete → discrete (stasis in bank, = 0)
+    define_kernel(
+      name      = "stay_discrete",
+      formula   = 0,
+      family    = "DD",
+      states    = states,
+      evict_cor = FALSE
+    ) %>%
+    # DC: discrete → continuous (seedlings emerging)
+    define_kernel(
+      name      = "leave_discrete",
+      formula   = e_p * f_d * d_ht,
+      family    = "DC",
+      f_d       = dnorm(ht_2, f_d_mu, f_d_sd),
+      data_list = params,
+      states    = states,
+      evict_cor = TRUE,
+      evict_fun = truncated_distributions("norm", "f_d")
+    ) %>%
+    define_impl(
+      make_impl_args_list(
+        kernel_names = c("P", "go_discrete", "stay_discrete", "leave_discrete"),
+        int_rule     = rep("midpoint", 4),
+        state_start  = c("ht", "ht", "b",  "b"),
+        state_end    = c("ht", "b",  "b",  "ht")
+      )
+    ) %>%
+    define_domains(ht = c(L, U, n)) %>%
+    define_pop_state(
+      pop_vectors = list(
+        n_ht = rep(1 / n, n),
+        n_b  = 20
+      )
+    ) %>%
+    make_ipm(iterations = 100, usr_funs = list(inv_logit_2 = inv_logit_2))
+}
+```
+
+### Build Both Models
+
+```{r}
+ipm_ctrl <- build_ligustrum(ctrl)
+ipm_cr   <- build_ligustrum(cr)
+```
+
+## Eigenanalysis
+
+```{r}
+lam_ctrl <- lambda(ipm_ctrl)
+lam_cr   <- lambda(ipm_cr)
+```
+
+```{r}
+#| echo: false
+cat("Control treatment:\n")
+cat("  λ =", round(lam_ctrl, 4), "\n")
+cat("\nCrown removal treatment:\n")
+cat("  λ =", round(lam_cr, 4), "\n")
+```
+
+### Published Values
+
+The published values from Levin et al. (2019) are:
+
+- Control: $\lambda \approx 1.22$
+- CR: $\lambda \approx 1.26$
+
+```{r}
+#| echo: false
+cat("Comparison with published values:\n")
+cat(sprintf("  Control: computed=%.2f, published=1.22, diff=%.3f\n",
+            lam_ctrl, abs(lam_ctrl - 1.22)))
+cat(sprintf("  CR:      computed=%.2f, published=1.26, diff=%.3f\n",
+            lam_cr, abs(lam_cr - 1.26)))
+```
+
+## Visualizing the Mega-Kernel
+
+```{r}
+h_val <- (U - L) / n
+meshpts <- L + ((1:n) - 1/2) * h_val
+
+# Extract CC block for visualization
+P_ctrl <- ipm_ctrl$sub_kernels$P
+
+image(meshpts, meshpts, t(P_ctrl),
+      xlab = "Height (t)", ylab = "Height (t+1)",
+      main = "CC block: survival-growth (control)",
+      col = hcl.colors(50, "viridis"))
+```
+
+## Stable Distribution
+
+```{r}
+w_ctrl <- right_ev(ipm_ctrl)
+
+# Height distribution
+w_ht <- w_ctrl$ht_w / sum(c(w_ctrl$ht_w, w_ctrl$b_w))
+w_b  <- sum(w_ctrl$b_w) / sum(c(w_ctrl$ht_w, w_ctrl$b_w))
+```
+
+```{r}
+#| echo: false
+cat("Proportion in height classes:", round(sum(w_ht), 4), "\n")
+cat("Proportion in seed bank:", round(w_b, 4), "\n")
+```
+
+```{r}
+plot(meshpts, w_ht, type = "l", lwd = 2, col = "blue",
+     xlab = "Height (cm)", ylab = "Proportion",
+     main = "Stable height distribution (control)")
+polygon(c(meshpts, rev(meshpts)),
+        c(w_ht, rep(0, n)),
+        col = adjustcolor("blue", alpha.f = 0.3), border = NA)
+lines(meshpts, w_ht, lwd = 2, col = "blue")
+```
+
+## Vital Rate Diagnostics
+
+```{r}
+surv_ctrl <- function(z) 1 / (1 + exp(-(ctrl$s_int + ctrl$s_slope * z + ctrl$s_slope_2 * z^2)))
+surv_cr   <- function(z) 1 / (1 + exp(-(cr$s_int + cr$s_slope * z + cr$s_slope_2 * z^2)))
+repr_prob <- function(z) 1 / (1 + exp(-(ctrl$f_r_int + ctrl$f_r_slope * z)))
+seed_prod <- function(z) exp(ctrl$f_s_int + ctrl$f_s_slope * z)
+
+z_seq <- seq(L, U, length.out = 200)
+z_off <- seq(0, 30, length.out = 200)
+
+par(mfrow = c(2, 2))
+plot(z_seq, sapply(z_seq, surv_ctrl), type = "l", lwd = 2,
+     xlab = "Height", ylab = "Probability", main = "Quadratic survival")
+lines(z_seq, sapply(z_seq, surv_cr), lwd = 2, lty = 2)
+legend("topright", c("Control", "CR"), lty = c(1, 2), lwd = 2, cex = 0.8)
+
+plot(z_seq, sapply(z_seq, repr_prob), type = "l", lwd = 2,
+     xlab = "Height", ylab = "Probability", main = "Reproduction probability")
+
+plot(z_seq, sapply(z_seq, seed_prod), type = "l", lwd = 2,
+     xlab = "Height", ylab = "Seeds", main = "Seed production")
+
+plot(z_off, dnorm(z_off, ctrl$f_d_mu, ctrl$f_d_sd), type = "l", lwd = 2,
+     xlab = "Offspring height", ylab = "Density", main = "Offspring size distribution")
+par(mfrow = c(1, 1))
+```
+
+## Population Dynamics
+
+```{r}
+all_lambdas_ctrl <- lambda(ipm_ctrl, type_lambda = "all")
+
+plot(all_lambdas_ctrl, type = "l", lwd = 2,
+     xlab = "Time step", ylab = expression(lambda(t)),
+     main = "Per-step growth rate (control)")
+abline(h = lam_ctrl, col = "red", lty = 2, lwd = 2)
+legend("topright", c(expression(lambda(t)), expression("Asymptotic " * lambda)),
+       lty = c(1, 2), col = c("black", "red"), lwd = 2)
+```
+
+## Comparing Treatments
+
+```{r}
+barplot(c(lam_ctrl, lam_cr), names.arg = c("Control", "Crown Removal"),
+        ylab = expression(lambda),
+        main = "Treatment comparison",
+        col = c("steelblue", "coral"),
+        ylim = c(1.0, 1.35))
+abline(h = 1.0, lty = 2, lwd = 2)
+```
+
+The crown removal treatment has a *higher* $\lambda$ than the control, suggesting that the removal of competing crown cover facilitates Ligustrum invasion.
+
+## Block Structure Explained
+
+The mega-kernel structure:
+
+```
+            Current state
+            ht (500)    b (1)
+          ┌──────────┬────────┐
+Next  ht  │  CC: P   │  DC:   │
+state     │  s×g     │  e_p×  │
+(500)     │  (500×500)│  f_d   │
+          │          │  (500×1)│
+          ├──────────┼────────┤
+      b   │  CD:     │  DD:   │
+     (1)  │  f_r×f_s │   0    │
+          │  ×g_i    │  (1×1) │
+          │  (1×500) │        │
+          └──────────┴────────┘
+```
+
+- **CC** ($500 \times 500$): Surviving plants grow (normal growth with truncation)
+- **CD** ($1 \times 500$): Reproducing plants send seeds to the bank ($f_r \times f_s \times g_i$)
+- **DC** ($500 \times 1$): Seeds germinate and establish as seedlings ($e_p \times f_d$)
+- **DD** ($1 \times 1$): Seeds do not stay in the bank (= 0 in this model)
+
+## Summary
+
+In this vignette we:
+
+1. Built a **general IPM** with a continuous height state and a discrete seed bank
+2. Used `ipmr`'s general model with CC, CD, DC, and DD kernel families
+3. Applied `truncated_distributions` eviction correction to growth and offspring size
+4. Computed $\lambda$ for control ($\approx 1.22$) and crown removal ($\approx 1.26$) treatments
+5. Validated against published results from Levin et al. (2019)

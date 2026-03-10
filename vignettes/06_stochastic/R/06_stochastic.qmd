@@ -1,0 +1,401 @@
+---
+title: "Stochastic IPMs"
+author: "Simon Frost"
+format:
+  html:
+    code-fold: false
+    toc: true
+---
+
+## Overview
+
+In stochastic IPMs, the environment varies over time, causing the projection kernel to change at each time step. There are two main approaches:
+
+1. **Kernel-resampled**: pre-compute a set of kernels (e.g., one per observed year) and randomly sample from them each time step
+2. **Parameter-resampled**: sample environmental parameters each time step and build a new kernel
+
+The **stochastic growth rate** is the geometric mean of per-step growth rates:
+
+$$
+\log \lambda_s = \lim_{T \to \infty} \frac{1}{T} \sum_{t=1}^{T} \log \lambda_t
+$$
+
+A key result is that $\lambda_s \leq \lambda_{\text{det}}$ — environmental stochasticity always reduces long-term growth relative to the deterministic case (Tuljapurkar's inequality).
+
+## Setup
+
+```{r}
+library(ipmr)
+```
+
+## Part 1: Kernel-Resampled Stochastic IPM
+
+We build 5 year-specific kernels for a monocarpic perennial, each with different random intercepts for survival, growth, and fecundity. This follows the `ipmr` test case.
+
+### Parameters
+
+```{r}
+s_int    <- 1.03;    s_slope  <- 2.2
+g_int    <- 8.0;     g_slope  <- 0.92;  sd_g <- 0.9
+f_r_int  <- 0.09;    f_r_slope <- 0.05
+f_s_int  <- 0.1;     f_s_slope <- 0.005
+mu_fd    <- 9.0;     sd_fd    <- 2.0
+
+# Year-specific random intercepts
+set.seed(50127)
+g_r   <- rnorm(5) * 0.3     # growth random intercepts
+s_r   <- rnorm(5) * 0.7     # survival random intercepts
+f_s_r <- rnorm(5) * 0.2     # fecundity random intercepts
+
+# Domain
+L_stoch <- 0.2;  U_stoch <- 40.0;  n_stoch <- 100
+```
+
+### Build Year-Specific Kernels with ipmr
+
+The `ipmr` package supports kernel-resampled stochastic IPMs using `uses_par_sets = TRUE` and `par_set_indices`. Each year gets its own kernel with year-specific random intercepts.
+
+```{r}
+# Prepare data list with year-specific parameters
+params <- list(
+  s_int     = s_int,
+  s_slope   = s_slope,
+  g_int     = g_int,
+  g_slope   = g_slope,
+  sd_g      = sd_g,
+  f_r_int   = f_r_int,
+  f_r_slope = f_r_slope,
+  f_s_int   = f_s_int,
+  f_s_slope = f_s_slope,
+  mu_fd     = mu_fd,
+  sd_fd     = sd_fd
+)
+
+# Add year-specific random intercepts: g_r_1, g_r_2, ..., s_r_1, ..., f_s_r_1, ...
+for (i in 1:5) {
+  params[[paste0("g_r_", i)]]   <- g_r[i]
+  params[[paste0("s_r_", i)]]   <- s_r[i]
+  params[[paste0("f_s_r_", i)]] <- f_s_r[i]
+}
+
+par_set_indices <- list(yr = 1:5)
+```
+
+```{r}
+stoch_kern_ipm <- init_ipm(sim_gen = "simple", di_dd = "di",
+                           det_stoch = "stoch", kern_param = "kern") %>%
+  define_kernel(
+    name            = "P_yr",
+    formula         = s_yr * g_yr,
+    family          = "CC",
+    s_yr            = 1 / (1 + exp(-(s_int + s_slope * ht_1 + s_r_yr))),
+    g_yr            = dnorm(ht_2, mu_g_yr, sd_g),
+    mu_g_yr         = g_int + g_slope * ht_1 + g_r_yr,
+    data_list       = params,
+    states          = list(c("ht")),
+    uses_par_sets   = TRUE,
+    par_set_indices = par_set_indices,
+    evict_cor       = TRUE,
+    evict_fun       = truncated_distributions("norm", "g_yr")
+  ) %>%
+  define_kernel(
+    name            = "F_yr",
+    formula         = f_r * f_s_yr * f_d,
+    family          = "CC",
+    f_r             = 1 / (1 + exp(-(f_r_int + f_r_slope * ht_1))),
+    f_s_yr          = exp(f_s_int + f_s_slope * ht_1 + f_s_r_yr),
+    f_d             = dnorm(ht_2, mu_fd, sd_fd),
+    data_list       = params,
+    states          = list(c("ht")),
+    uses_par_sets   = TRUE,
+    par_set_indices = par_set_indices,
+    evict_cor       = TRUE,
+    evict_fun       = truncated_distributions("norm", "f_d")
+  ) %>%
+  define_impl(
+    make_impl_args_list(
+      kernel_names = c("P_yr", "F_yr"),
+      int_rule     = rep("midpoint", 2),
+      state_start  = rep("ht", 2),
+      state_end    = rep("ht", 2)
+    )
+  ) %>%
+  define_domains(ht = c(L_stoch, U_stoch, n_stoch)) %>%
+  define_pop_state(n_ht = runif(n_stoch))
+
+# Deterministic lambda for each year
+for (yr in 1:5) {
+  temp_ipm <- make_ipm(stoch_kern_ipm,
+                       iterate = TRUE, iterations = 100,
+                       normalize_pop_size = TRUE,
+                       kernel_seq = rep(yr, 100))
+  cat("Year", yr, ": λ =", round(lambda(temp_ipm), 4), "\n")
+}
+```
+
+### Deterministic Lambda (Average Kernel)
+
+```{r}
+# Run with cycling through all years deterministically
+det_ipm <- make_ipm(stoch_kern_ipm,
+                    iterate = TRUE, iterations = 500,
+                    normalize_pop_size = TRUE,
+                    kernel_seq = rep(1:5, 100))
+lam_det <- lambda(det_ipm)
+```
+
+```{r}
+#| echo: false
+cat("Deterministic λ (cycling kernel):", round(lam_det, 6), "\n")
+```
+
+### Stochastic Simulation
+
+```{r}
+set.seed(42)
+n_iter <- 1000
+kern_seq <- sample(1:5, n_iter, replace = TRUE)
+
+stoch_ipm <- make_ipm(stoch_kern_ipm,
+                      iterate = TRUE, iterations = n_iter,
+                      normalize_pop_size = TRUE,
+                      kernel_seq = kern_seq)
+```
+
+### Stochastic Growth Rate
+
+```{r}
+all_lambdas <- lambda(stoch_ipm, type_lambda = "all")
+
+# Stochastic growth rate: exp(mean(log(lambda_t)))
+burn_in <- 100
+log_lambdas <- log(all_lambdas[(burn_in + 1):length(all_lambdas)])
+log_lam_s <- mean(log_lambdas)
+lam_s <- exp(log_lam_s)
+```
+
+```{r}
+#| echo: false
+cat("Stochastic growth rate:     λ_s =", round(lam_s, 6), "\n")
+cat("Log stochastic growth rate: log(λ_s) =", round(log_lam_s, 6), "\n")
+cat("Deterministic growth rate:  λ_det =", round(lam_det, 6), "\n")
+cat("\nTuljapurkar's inequality: λ_s ≤ λ_det?", lam_s <= lam_det, "\n")
+```
+
+### Visualize Stochastic Dynamics
+
+```{r}
+plot(all_lambdas[1:200], type = "l", lwd = 0.5, col = adjustcolor("black", 0.7),
+     xlab = "Time step", ylab = expression(lambda(t)),
+     main = "Per-step growth rates (kernel-resampled)")
+abline(h = lam_s, col = "red", lwd = 2)
+abline(h = lam_det, col = "blue", lwd = 2, lty = 2)
+legend("topright",
+       c(expression(lambda[s] ~ "(stochastic)"), expression(lambda[det] ~ "(deterministic)")),
+       col = c("red", "blue"), lwd = 2, lty = c(1, 2))
+```
+
+```{r}
+# Running average of log lambda
+log_all <- log(all_lambdas)
+running_mean <- cumsum(log_all[(burn_in + 1):length(log_all)]) /
+  seq_along(log_all[(burn_in + 1):length(log_all)])
+
+plot((burn_in + 1):length(log_all), running_mean, type = "l", lwd = 1,
+     xlab = "Time step", ylab = "Running mean log(λ)",
+     main = "Convergence of stochastic growth rate")
+abline(h = log_lam_s, col = "red", lwd = 2)
+legend("topright", expression("log(" * lambda[s] * ")"), col = "red", lwd = 2)
+```
+
+## Part 2: Parameter-Resampled Stochastic IPM
+
+Instead of pre-computing kernels, we sample parameters from environmental distributions at each time step. In `ipmr`, this uses `define_env_state()`.
+
+```{r}
+stoch_param_ipm <- init_ipm(sim_gen = "simple", di_dd = "di",
+                            det_stoch = "stoch", kern_param = "param") %>%
+  define_kernel(
+    name      = "P",
+    formula   = s * g,
+    family    = "CC",
+    s         = 1 / (1 + exp(-(s_int + s_slope * ht_1 + s_offset))),
+    g         = dnorm(ht_2, mu_g, sd_g),
+    mu_g      = g_int + g_slope * ht_1 + g_offset,
+    data_list = list(s_int = s_int, s_slope = s_slope,
+                     g_int = g_int, g_slope = g_slope, sd_g = sd_g),
+    states    = list(c("ht")),
+    evict_cor = TRUE,
+    evict_fun = truncated_distributions("norm", "g")
+  ) %>%
+  define_kernel(
+    name      = "F",
+    formula   = f_r * f_s * f_d,
+    family    = "CC",
+    f_r       = 1 / (1 + exp(-(f_r_int + f_r_slope * ht_1))),
+    f_s       = exp(f_s_int + f_s_slope * ht_1 + f_s_offset),
+    f_d       = dnorm(ht_2, mu_fd, sd_fd),
+    data_list = list(f_r_int = f_r_int, f_r_slope = f_r_slope,
+                     f_s_int = f_s_int, f_s_slope = f_s_slope,
+                     mu_fd = mu_fd, sd_fd = sd_fd),
+    states    = list(c("ht")),
+    evict_cor = TRUE,
+    evict_fun = truncated_distributions("norm", "f_d")
+  ) %>%
+  define_impl(
+    make_impl_args_list(
+      kernel_names = c("P", "F"),
+      int_rule     = rep("midpoint", 2),
+      state_start  = rep("ht", 2),
+      state_end    = rep("ht", 2)
+    )
+  ) %>%
+  define_domains(ht = c(L_stoch, U_stoch, n_stoch)) %>%
+  define_env_state(
+    s_offset   = rnorm(1, 0, 0.7),
+    g_offset   = rnorm(1, 0, 0.3),
+    f_s_offset = rnorm(1, 0, 0.2),
+    data_list  = list()
+  ) %>%
+  define_pop_state(n_ht = runif(n_stoch)) %>%
+  make_ipm(iterate = TRUE, iterations = 1000,
+           normalize_pop_size = TRUE)
+```
+
+```{r}
+all_lambdas_param <- lambda(stoch_param_ipm, type_lambda = "all")
+
+log_lambdas_param <- log(all_lambdas_param[(burn_in + 1):length(all_lambdas_param)])
+lam_s_param <- exp(mean(log_lambdas_param))
+```
+
+```{r}
+#| echo: false
+cat("Stochastic growth rate (parameter-resampled):", round(lam_s_param, 6), "\n")
+```
+
+```{r}
+plot(all_lambdas_param[1:200], type = "l", lwd = 0.5, col = adjustcolor("black", 0.7),
+     xlab = "Time step", ylab = expression(lambda(t)),
+     main = "Per-step growth rates (parameter-resampled)")
+abline(h = lam_s_param, col = "red", lwd = 2)
+legend("topright", expression(lambda[s]), col = "red", lwd = 2)
+```
+
+## Comparing the Two Approaches
+
+| Feature | Kernel-resampled | Parameter-resampled |
+|---------|-----------------|---------------------|
+| Pre-computation | Kernels built once | Kernel built each step |
+| Environmental variation | Discrete set of environments | Continuous distribution |
+| Reproducibility | Easy with fixed sequence | Requires seeded RNG |
+| Speed | Faster (reuse materialized kernels) | Slower (kernel rebuilt each step) |
+| Flexibility | Limited to observed environments | Can model any distribution |
+
+## Effect of Environmental Variance
+
+Let us examine how increasing environmental variance affects the stochastic growth rate.
+
+```{r}
+set.seed(999)
+sigma_vals <- seq(0.0, 1.5, length.out = 8)
+lam_s_by_sigma <- numeric(length(sigma_vals))
+
+for (k in seq_along(sigma_vals)) {
+  sigma <- sigma_vals[k]
+
+  if (sigma < 1e-10) {
+    # Deterministic case
+    det_ipm_k <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "det") %>%
+      define_kernel(
+        name = "P", formula = s * g, family = "CC",
+        s = 1 / (1 + exp(-(s_int + s_slope * ht_1))),
+        g = dnorm(ht_2, mu_g, sd_g),
+        mu_g = g_int + g_slope * ht_1,
+        data_list = list(s_int = s_int, s_slope = s_slope,
+                         g_int = g_int, g_slope = g_slope, sd_g = sd_g),
+        states = list(c("ht")), uses_par_sets = FALSE,
+        evict_cor = TRUE, evict_fun = truncated_distributions("norm", "g")
+      ) %>%
+      define_kernel(
+        name = "F", formula = f_r * f_s * f_d, family = "CC",
+        f_r = 1 / (1 + exp(-(f_r_int + f_r_slope * ht_1))),
+        f_s = exp(f_s_int + f_s_slope * ht_1),
+        f_d = dnorm(ht_2, mu_fd, sd_fd),
+        data_list = list(f_r_int = f_r_int, f_r_slope = f_r_slope,
+                         f_s_int = f_s_int, f_s_slope = f_s_slope,
+                         mu_fd = mu_fd, sd_fd = sd_fd),
+        states = list(c("ht")), uses_par_sets = FALSE,
+        evict_cor = TRUE, evict_fun = truncated_distributions("norm", "f_d")
+      ) %>%
+      define_impl(make_impl_args_list(
+        kernel_names = c("P", "F"), int_rule = rep("midpoint", 2),
+        state_start = rep("ht", 2), state_end = rep("ht", 2)
+      )) %>%
+      define_domains(ht = c(L_stoch, U_stoch, n_stoch)) %>%
+      define_pop_state(n_ht = runif(n_stoch)) %>%
+      make_ipm(iterations = 100)
+    lam_s_by_sigma[k] <- lambda(det_ipm_k)
+  } else {
+    stoch_k <- init_ipm(sim_gen = "simple", di_dd = "di",
+                        det_stoch = "stoch", kern_param = "param") %>%
+      define_kernel(
+        name = "P", formula = s * g, family = "CC",
+        s = 1 / (1 + exp(-(s_int + s_slope * ht_1 + s_offset))),
+        g = dnorm(ht_2, mu_g, sd_g),
+        mu_g = g_int + g_slope * ht_1 + g_offset,
+        data_list = list(s_int = s_int, s_slope = s_slope,
+                         g_int = g_int, g_slope = g_slope, sd_g = sd_g),
+        states = list(c("ht")),
+        evict_cor = TRUE, evict_fun = truncated_distributions("norm", "g")
+      ) %>%
+      define_kernel(
+        name = "F", formula = f_r * f_s * f_d, family = "CC",
+        f_r = 1 / (1 + exp(-(f_r_int + f_r_slope * ht_1))),
+        f_s = exp(f_s_int + f_s_slope * ht_1 + f_s_offset),
+        f_d = dnorm(ht_2, mu_fd, sd_fd),
+        data_list = list(f_r_int = f_r_int, f_r_slope = f_r_slope,
+                         f_s_int = f_s_int, f_s_slope = f_s_slope,
+                         mu_fd = mu_fd, sd_fd = sd_fd),
+        states = list(c("ht")),
+        evict_cor = TRUE, evict_fun = truncated_distributions("norm", "f_d")
+      ) %>%
+      define_impl(make_impl_args_list(
+        kernel_names = c("P", "F"), int_rule = rep("midpoint", 2),
+        state_start = rep("ht", 2), state_end = rep("ht", 2)
+      )) %>%
+      define_domains(ht = c(L_stoch, U_stoch, n_stoch)) %>%
+      define_env_state(
+        s_offset   = rnorm(1, 0, sigma_val),
+        g_offset   = rnorm(1, 0, 0.3),
+        f_s_offset = rnorm(1, 0, 0.2),
+        data_list  = list(sigma_val = sigma)
+      ) %>%
+      define_pop_state(n_ht = runif(n_stoch)) %>%
+      make_ipm(iterate = TRUE, iterations = 500,
+               normalize_pop_size = TRUE)
+
+    all_lam_k <- lambda(stoch_k, type_lambda = "all")
+    lam_s_by_sigma[k] <- exp(mean(log(all_lam_k[51:length(all_lam_k)])))
+  }
+}
+
+plot(sigma_vals, lam_s_by_sigma, type = "b", lwd = 2, pch = 16,
+     xlab = "Survival SD (σ)", ylab = expression(lambda[s]),
+     main = "Stochastic growth rate vs environmental variance")
+abline(h = lam_s_by_sigma[1], col = "red", lty = 2, lwd = 2)
+legend("topright", expression("Deterministic " * lambda ~ "(σ=0)"),
+       col = "red", lty = 2, lwd = 2)
+```
+
+As environmental variance increases, the stochastic growth rate decreases, consistent with Tuljapurkar's inequality.
+
+## Summary
+
+In this vignette we:
+
+1. Built a **kernel-resampled** stochastic IPM with 5 year-specific kernels using `uses_par_sets`
+2. Computed the stochastic growth rate $\lambda_s = \exp(\overline{\log \lambda_t})$
+3. Verified Tuljapurkar's inequality: $\lambda_s \leq \lambda_{\text{det}}$
+4. Built a **parameter-resampled** stochastic IPM using `define_env_state()`
+5. Demonstrated that increasing environmental variance reduces $\lambda_s$

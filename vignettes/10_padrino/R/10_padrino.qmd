@@ -1,0 +1,86 @@
+---
+title: "PADRINO Database Integration (R Companion)"
+format:
+  html:
+    code-fold: false
+    toc: true
+---
+
+## Introduction
+
+This is the R companion vignette showing the equivalent RPadrino workflow.
+The [RPadrino](https://github.com/padrinoDB/RPadrino) package provides
+access to the PADRINO database of published Integral Projection Models.
+
+```{r}
+#| message: false
+library(Rpadrino)
+library(ipmr)
+```
+
+## Downloading the Database
+
+```{r}
+pdb <- pdb_download(save = FALSE)
+cat("Models in database:", nrow(pdb$Metadata), "\n")
+cat("Unique species:", length(unique(pdb$Metadata$species_accepted)), "\n")
+```
+
+## Exploring the Database
+
+```{r}
+# Species names
+species <- pdb_species_accepted(pdb)
+head(species, 10)
+```
+
+```{r}
+# Citations
+pdb_citations(pdb, ipm_id = "aaa310")
+```
+
+## Building a Simple Deterministic Model
+
+```{r}
+# Two-step approach
+proto <- pdb_make_proto_ipm(pdb, ipm_id = "aaa310")
+ipm <- pdb_make_ipm(proto)
+
+# Get lambda
+lam <- lambda(ipm)
+cat("aaa310 λ =", lam$aaa310, "\n")
+```
+
+## Batch Analysis
+
+```{r}
+# Build multiple models
+ids <- pdb$Metadata$ipm_id[1:20]
+protos <- pdb_make_proto_ipm(pdb, ipm_id = ids)
+ipms <- pdb_make_ipm(protos)
+cat("Successfully built:", length(ipms), "/ 20\n")
+```
+
+```{r}
+# Compute lambda for each
+lambdas <- lambda(ipms)
+for (id in names(lambdas)) {
+  cat(" ", id, ": λ =", round(lambdas[[id]], 4), "\n")
+}
+```
+
+## Subsetting
+
+```{r}
+sub_pdb <- pdb_subset(pdb, ipm_ids = c("aaa310", "aaa341"))
+cat("Models in subset:", nrow(sub_pdb$Metadata), "\n")
+pdb_species_accepted(sub_pdb)
+```
+
+## Saving and Loading
+
+```{r}
+#| eval: false
+pdb_save(pdb, destination = "/tmp/padrino_data/")
+pdb2 <- pdb_load("/tmp/padrino_data/")
+```

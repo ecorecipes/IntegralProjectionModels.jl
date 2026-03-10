@@ -1,0 +1,240 @@
+---
+title: "Introduction to Integral Projection Models"
+author: "Simon Frost"
+format:
+  html:
+    code-fold: false
+    toc: true
+---
+
+## Overview
+
+This vignette introduces **Integral Projection Models (IPMs)** using the classic monocarpic perennial *Oenothera glazioviana* (evening primrose) example from Ellner, Childs & Rees. We construct a simple, density-independent, deterministic IPM, compute the asymptotic growth rate $\lambda$, and examine the stable size distribution.
+
+An IPM tracks the size distribution $n(z, t)$ of a structured population. The core equation is:
+
+$$
+n(z', t+1) = \int_{L}^{U} K(z', z) \, n(z, t) \, dz
+$$
+
+where $K(z', z) = P(z', z) + F(z', z)$ is the projection kernel, composed of a survival-growth kernel $P$ and a fecundity kernel $F$.
+
+## Setup
+
+```{r}
+library(ipmr)
+library(ggplot2)
+```
+
+## The Monocarp Model
+
+*Oenothera* is a monocarpic perennial: plants grow vegetatively for several years, then flower once and die. Size is measured on a log scale. The parameters come from Kachi & Hirose (1985) and Rees & Rose (2002).
+
+### Parameters
+
+```{r}
+data_list <- list(
+  surv_int  = -0.65,
+  surv_z    =  0.75,
+  flow_int  = -18.0,
+  flow_z    =  6.9,
+  grow_int  =  0.96,
+  grow_z    =  0.59,
+  grow_sd   =  0.67,
+  rcsz_int  = -0.08,
+  rcsz_sd   =  0.76,
+  seed_int  =  1.0,
+  seed_z    =  2.2,
+  p_r       =  0.007
+)
+```
+
+### Domain
+
+The domain spans the range of log sizes, with bounds set slightly beyond the observed data range to minimize eviction (loss of individuals outside the domain).
+
+```{r}
+L <- -2.65
+U <- 4.5
+m <- 250
+```
+
+### Building the IPM with ipmr
+
+The `ipmr` package provides a pipeline for building IPMs. We define the P (survival-growth) and F (fecundity) kernels using mathematical expressions.
+
+The **P kernel** (survival-growth) describes the probability that an individual of size $z$ survives, does *not* flower, and grows to size $z'$:
+
+$$
+P(z', z) = s(z) \cdot (1 - p_b(z)) \cdot G(z'|z)
+$$
+
+The **F kernel** (fecundity) describes the production of new recruits of size $z'$ from flowering individuals of size $z$:
+
+$$
+F(z', z) = p_b(z) \cdot b(z) \cdot p_r \cdot c_0(z')
+$$
+
+```{r}
+monocarp_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "det") %>%
+  define_kernel(
+    name          = "P",
+    formula       = s * (1 - p_b) * g,
+    family        = "CC",
+    s             = 1 / (1 + exp(-(surv_int + surv_z * z_1))),
+    p_b           = 1 / (1 + exp(-(flow_int + flow_z * z_1))),
+    g             = dnorm(z_2, grow_mu, grow_sd),
+    grow_mu       = grow_int + grow_z * z_1,
+    data_list     = data_list,
+    states        = list(c("z")),
+    uses_par_sets = FALSE,
+    evict_cor     = FALSE
+  ) %>%
+  define_kernel(
+    name          = "F",
+    formula       = p_b * b * p_r * c_0,
+    family        = "CC",
+    p_b           = 1 / (1 + exp(-(flow_int + flow_z * z_1))),
+    b             = exp(seed_int + seed_z * z_1),
+    c_0           = dnorm(z_2, rcsz_int, rcsz_sd),
+    data_list     = data_list,
+    states        = list(c("z")),
+    uses_par_sets = FALSE,
+    evict_cor     = FALSE
+  ) %>%
+  define_impl(
+    make_impl_args_list(
+      kernel_names = c("P", "F"),
+      int_rule     = rep("midpoint", 2),
+      state_start  = rep("z", 2),
+      state_end    = rep("z", 2)
+    )
+  ) %>%
+  define_domains(z = c(L, U, m)) %>%
+  define_pop_state(n_z = rep(1 / m, m)) %>%
+  make_ipm(iterations = 100)
+```
+
+## Eigenanalysis
+
+The asymptotic growth rate $\lambda$ is the dominant eigenvalue of the kernel matrix $K$. The stable size distribution is the corresponding right eigenvector, and the reproductive value is the left eigenvector.
+
+```{r}
+lam <- lambda(monocarp_ipm)
+```
+
+```{r}
+#| echo: false
+cat("Asymptotic growth rate (lambda):", lam, "\n")
+```
+
+### Kernel Visualization
+
+```{r}
+K <- monocarp_ipm$sub_kernels$P + monocarp_ipm$sub_kernels$F
+h <- (U - L) / m
+meshpts <- L + ((1:m) - 1/2) * h
+
+image(meshpts, meshpts, t(K),
+      xlab = "Size at time t", ylab = "Size at time t+1",
+      main = "IPM Kernel K(z', z)",
+      col = hcl.colors(50, "viridis"))
+```
+
+```{r}
+par(mfrow = c(1, 2))
+image(meshpts, meshpts, t(monocarp_ipm$sub_kernels$P),
+      xlab = "Size (t)", ylab = "Size (t+1)",
+      main = "P kernel (survival-growth)",
+      col = hcl.colors(50, "viridis"))
+image(meshpts, meshpts, t(monocarp_ipm$sub_kernels$F),
+      xlab = "Size (t)", ylab = "Size (t+1)",
+      main = "F kernel (fecundity)",
+      col = hcl.colors(50, "viridis"))
+par(mfrow = c(1, 1))
+```
+
+### Stable Size Distribution
+
+The stable size distribution $w(z)$ is the right eigenvector of $K$, normalized to sum to 1.
+
+```{r}
+w <- right_ev(monocarp_ipm)
+stable_dist <- w$z_w / sum(w$z_w)
+
+plot(meshpts, stable_dist, type = "l", lwd = 2, col = "blue",
+     xlab = "Size (log scale)", ylab = "Proportion",
+     main = "Stable size distribution")
+polygon(c(meshpts, rev(meshpts)),
+        c(stable_dist, rep(0, m)),
+        col = adjustcolor("blue", alpha.f = 0.3), border = NA)
+```
+
+### Reproductive Value
+
+The reproductive value $v(z)$ is the left eigenvector. It gives the expected contribution of an individual of size $z$ to future population growth, relative to a newborn.
+
+```{r}
+v <- left_ev(monocarp_ipm)
+repro_val <- v$z_v
+
+plot(meshpts, repro_val, type = "l", lwd = 2, col = "red",
+     xlab = "Size (log scale)", ylab = "Reproductive value",
+     main = "Reproductive value v(z)")
+```
+
+### Mean Size at Stable Distribution
+
+```{r}
+mean_z <- sum(stable_dist * meshpts)
+```
+
+```{r}
+#| echo: false
+cat("Mean size (log scale) at stable distribution:", round(mean_z, 3), "\n")
+```
+
+## Population Projection
+
+The per-step growth rates converge to $\lambda$ over time.
+
+```{r}
+all_lambdas <- lambda(monocarp_ipm, type_lambda = "all")
+
+plot(all_lambdas, type = "l", lwd = 2,
+     xlab = "Time step", ylab = expression(lambda(t)),
+     main = expression("Convergence of growth rate to " * lambda))
+abline(h = lam, col = "red", lty = 2, lwd = 2)
+legend("topright", c(expression(lambda(t)), expression("Asymptotic " * lambda)),
+       lty = c(1, 2), col = c("black", "red"), lwd = 2)
+```
+
+## Vital Rate Diagnostics
+
+```{r}
+s_z <- function(z) 1 / (1 + exp(-(data_list$surv_int + data_list$surv_z * z)))
+p_bz <- function(z) 1 / (1 + exp(-(data_list$flow_int + data_list$flow_z * z)))
+b_z <- function(z) exp(data_list$seed_int + data_list$seed_z * z)
+eff_surv <- function(z) s_z(z) * (1 - p_bz(z))
+
+par(mfrow = c(2, 2))
+curve(s_z, L, U, lwd = 2, xlab = "Size", ylab = "Probability", main = "Survival s(z)")
+curve(p_bz, L, U, lwd = 2, col = "orange", xlab = "Size", ylab = "Probability", main = "Flowering p_b(z)")
+curve(b_z, L, U, lwd = 2, col = "green4", xlab = "Size", ylab = "Seeds", main = "Seed production b(z)")
+curve(eff_surv, L, U, lwd = 2, col = "purple", xlab = "Size", ylab = "Probability",
+      main = "Effective survival\ns(z) x (1-p_b(z))")
+par(mfrow = c(1, 1))
+```
+
+## Summary
+
+In this vignette we:
+
+1. Defined vital rate functions for a monocarpic perennial (*Oenothera*)
+2. Constructed P (survival-growth) and F (fecundity) kernels using the `ipmr` pipeline
+3. Discretized the kernel using the midpoint rule (250 mesh points on $[-2.65, 4.5]$)
+4. Computed the asymptotic growth rate $\lambda$ via eigenanalysis
+5. Examined the stable size distribution and reproductive value
+6. Projected population dynamics via direct iteration
+
+The next vignette covers an iteroparous species (Soay sheep) with a different life history structure.

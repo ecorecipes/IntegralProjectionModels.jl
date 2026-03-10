@@ -1,0 +1,264 @@
+---
+title: "Ungulate IPM: Soay Sheep"
+author: "Simon Frost"
+format:
+  html:
+    code-fold: false
+    toc: true
+---
+
+## Overview
+
+This vignette builds a density-independent, deterministic IPM for **Soay sheep** (*Ovis aries*), an iteroparous ungulate from the St Kilda archipelago, Scotland. Unlike the monocarpic *Oenothera* in the previous vignette, Soay sheep can reproduce multiple times — survival appears in *both* the P and F kernels.
+
+Key differences from the monocarp model:
+
+- Survival is in both P and F kernels (reproductive individuals survive)
+- A 0.5 sex ratio factor in the F kernel (females-only model)
+- Recruit size depends on maternal size (not fixed)
+- Recruitment probability is size-independent
+
+## Setup
+
+```{r}
+library(ipmr)
+```
+
+## Parameters
+
+Size is log body mass. Parameters are from the textbook (Ellner, Childs & Rees, Chapter 2).
+
+```{r}
+data_list <- list(
+  surv_int  = -9.65,
+  surv_z    =  3.77,
+  grow_int  =  1.41,
+  grow_z    =  0.557,
+  grow_sd   =  0.0799,
+  repr_int  = -7.23,
+  repr_z    =  2.60,
+  recr_int  =  1.93,
+  recr_pr   =  1 / (1 + exp(-1.93)),  # pre-computed recruitment probability
+  rcsz_int  =  0.362,
+  rcsz_z    =  0.709,
+  rcsz_sd   =  0.159
+)
+```
+
+## Domain
+
+```{r}
+L <- 1.6
+U <- 3.7
+m <- 100
+```
+
+## Kernel Structure
+
+For an iteroparous species, the kernel decomposition is:
+
+$$
+P(z', z) = s(z) \cdot g(z'|z)
+$$
+
+$$
+F(z', z) = s(z) \cdot p_b(z) \cdot \frac{1}{2} \cdot p_r \cdot c(z'|z)
+$$
+
+Note that **survival $s(z)$ appears in F** because a mother must survive to census to be counted with her offspring. The factor $\frac{1}{2}$ accounts for the sex ratio (we model females only).
+
+```{r}
+ungulate_ipm <- init_ipm(sim_gen = "simple", di_dd = "di", det_stoch = "det") %>%
+  define_kernel(
+    name          = "P",
+    formula       = s * g,
+    family        = "CC",
+    s             = 1 / (1 + exp(-(surv_int + surv_z * z_1))),
+    g             = dnorm(z_2, grow_mu, grow_sd),
+    grow_mu       = grow_int + grow_z * z_1,
+    data_list     = data_list,
+    states        = list(c("z")),
+    uses_par_sets = FALSE,
+    evict_cor     = FALSE
+  ) %>%
+  define_kernel(
+    name          = "F",
+    formula       = s * pb * 0.5 * recr_pr * c_z1z,
+    family        = "CC",
+    s             = 1 / (1 + exp(-(surv_int + surv_z * z_1))),
+    pb            = 1 / (1 + exp(-(repr_int + repr_z * z_1))),
+    c_z1z         = dnorm(z_2, rcsz_mu, rcsz_sd),
+    rcsz_mu       = rcsz_int + rcsz_z * z_1,
+    data_list     = data_list,
+    states        = list(c("z")),
+    uses_par_sets = FALSE,
+    evict_cor     = FALSE
+  ) %>%
+  define_impl(
+    make_impl_args_list(
+      kernel_names = c("P", "F"),
+      int_rule     = rep("midpoint", 2),
+      state_start  = rep("z", 2),
+      state_end    = rep("z", 2)
+    )
+  ) %>%
+  define_domains(z = c(L, U, m)) %>%
+  define_pop_state(n_z = rep(1 / m, m)) %>%
+  make_ipm(iterations = 100)
+```
+
+## Eigenanalysis
+
+```{r}
+lam <- lambda(ungulate_ipm)
+```
+
+```{r}
+#| echo: false
+cat("Asymptotic growth rate (lambda):", lam, "\n")
+```
+
+## Vital Rate Visualization
+
+```{r}
+h <- (U - L) / m
+meshpts <- L + ((1:m) - 1/2) * h
+
+s_z <- function(z) 1 / (1 + exp(-(data_list$surv_int + data_list$surv_z * z)))
+pb_z <- function(z) 1 / (1 + exp(-(data_list$repr_int + data_list$repr_z * z)))
+
+par(mfrow = c(2, 2))
+curve(s_z, L, U, lwd = 2, xlab = "Log body mass", ylab = "Probability", main = "Survival")
+curve(pb_z, L, U, lwd = 2, col = "orange", xlab = "Log body mass", ylab = "Probability",
+      main = "Reproduction probability")
+curve(dnorm(x, data_list$grow_int + data_list$grow_z * x, data_list$grow_sd), L, U,
+      lwd = 2, col = "green4", xlab = "Log body mass", ylab = "Density",
+      main = "Growth (staying same size)")
+curve(data_list$rcsz_int + data_list$rcsz_z * x, L, U,
+      lwd = 2, col = "purple", xlab = "Maternal log mass", ylab = "Mean offspring log mass",
+      main = "Recruit size (mean)")
+par(mfrow = c(1, 1))
+```
+
+## Kernel Visualization
+
+```{r}
+par(mfrow = c(1, 2))
+image(meshpts, meshpts, t(ungulate_ipm$sub_kernels$P),
+      xlab = "Size (t)", ylab = "Size (t+1)",
+      main = "P kernel", col = hcl.colors(50, "viridis"))
+image(meshpts, meshpts, t(ungulate_ipm$sub_kernels$F),
+      xlab = "Size (t)", ylab = "Size (t+1)",
+      main = "F kernel", col = hcl.colors(50, "viridis"))
+par(mfrow = c(1, 1))
+```
+
+## Stable Distribution and Reproductive Value
+
+```{r}
+w <- right_ev(ungulate_ipm)
+v <- left_ev(ungulate_ipm)
+stable_dist <- w$z_w / sum(w$z_w)
+repro_val <- v$z_v
+
+par(mfrow = c(1, 2))
+plot(meshpts, stable_dist, type = "l", lwd = 2, col = "blue",
+     xlab = "Log body mass", ylab = "Proportion",
+     main = "Stable size distribution")
+polygon(c(meshpts, rev(meshpts)),
+        c(stable_dist, rep(0, m)),
+        col = adjustcolor("blue", alpha.f = 0.3), border = NA)
+plot(meshpts, repro_val, type = "l", lwd = 2, col = "red",
+     xlab = "Log body mass", ylab = "Reproductive value",
+     main = "Reproductive value")
+par(mfrow = c(1, 1))
+```
+
+## Mean Size at Stable Distribution
+
+```{r}
+mean_z <- sum(stable_dist * meshpts)
+var_z <- sum(stable_dist * meshpts^2) - mean_z^2
+```
+
+```{r}
+#| echo: false
+cat("Mean log body mass:", round(mean_z, 4), "\n")
+cat("SD log body mass:", round(sqrt(var_z), 4), "\n")
+cat("Mean body mass (kg):", round(exp(mean_z), 2), "\n")
+```
+
+## Age-Specific Size Distributions
+
+Even in a simple (non-age-structured) IPM, we can recover age-specific size distributions from the P and F kernels.
+
+```{r}
+P_mat <- ungulate_ipm$sub_kernels$P
+F_mat <- ungulate_ipm$sub_kernels$F
+n_ages <- 8
+
+age_dists <- list()
+age_dists[[1]] <- F_mat %*% stable_dist / lam
+for (a in 2:n_ages) {
+  age_dists[[a]] <- P_mat %*% age_dists[[a - 1]] / lam
+}
+
+mean_by_age <- sapply(1:n_ages, function(a) {
+  d <- age_dists[[a]] / sum(age_dists[[a]])
+  sum(d * meshpts)
+})
+```
+
+```{r}
+#| echo: false
+cat("Mean log body mass by age:\n")
+for (a in 1:n_ages) {
+  cat(sprintf("  Age %d: %.3f (mass = %.2f kg)\n",
+              a - 1, mean_by_age[a], exp(mean_by_age[a])))
+}
+```
+
+```{r}
+cols <- rainbow(min(n_ages, 6))
+plot(meshpts, age_dists[[1]] / sum(age_dists[[1]]),
+     type = "l", lwd = 2, col = cols[1],
+     xlab = "Log body mass", ylab = "Density",
+     main = "Age-specific size distributions",
+     ylim = c(0, max(sapply(1:6, function(a) max(age_dists[[a]] / sum(age_dists[[a]]))))))
+for (a in 2:min(n_ages, 6)) {
+  lines(meshpts, age_dists[[a]] / sum(age_dists[[a]]), lwd = 2, col = cols[a])
+}
+legend("topright", paste("Age", 0:5), col = cols, lwd = 2, cex = 0.8)
+```
+
+## Comparison with Monocarp Structure
+
+| Feature | Monocarp (*Oenothera*) | Ungulate (Soay sheep) |
+|---------|------------------------|-----------------------|
+| Life history | Monocarpic (reproduce once, die) | Iteroparous (repeated reproduction) |
+| Survival in F | No (flowering = death) | Yes (mothers must survive) |
+| Sex ratio | Not modeled | 0.5 (females only) |
+| Recruit size | Fixed distribution | Depends on maternal size |
+| P kernel | $s(z)(1-p_b(z)) \cdot g(z'|z)$ | $s(z) \cdot g(z'|z)$ |
+| F kernel | $p_b(z) \cdot b(z) \cdot p_r \cdot c_0(z')$ | $s(z) \cdot p_b(z) \cdot 0.5 \cdot p_r \cdot c(z'|z)$ |
+
+## Population Projection
+
+```{r}
+all_lambdas <- lambda(ungulate_ipm, type_lambda = "all")
+
+plot(all_lambdas, type = "l", lwd = 2,
+     xlab = "Time step", ylab = expression(lambda(t)),
+     main = expression("Convergence to asymptotic " * lambda))
+abline(h = lam, col = "red", lty = 2, lwd = 2)
+```
+
+## Summary
+
+In this vignette we:
+
+1. Built a density-independent, deterministic IPM for Soay sheep using `ipmr`
+2. Highlighted the key structural difference from monocarpic models: survival in the F kernel
+3. Computed $\lambda$, stable distribution, and reproductive value
+4. Recovered age-specific size distributions from the simple IPM
+5. Compared the ungulate and monocarp model structures
