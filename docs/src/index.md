@@ -35,6 +35,15 @@ println("λ = ", lambda(sol))
 
 ## API Reference
 
-```@autodocs
-Modules = [IntegralProjectionModels]
-```
+- **[Domains](@ref)** -- Continuous and discrete state space definitions
+- **[Vital Rates](@ref)** -- Survival, growth, fecundity, and custom vital rate types
+- **[Kernels](@ref)** -- Kernel types, eviction correction, subkernels, and composition
+- **[Types & Traits](@ref)** -- IPM structure, density dependence, and stochasticity traits
+- **[Problem & Solution](@ref)** -- IPMProblem/IPMSolution and the solve interface
+- **[Analysis](@ref)** -- Eigenanalysis, sensitivity, elasticity, stochastic growth rates
+- **[Time-Lag Models](@ref)** -- Time-lagged state variable support
+- **[Age×Size Models](@ref)** -- Joint age and continuous state models
+- **[Categorical Composition](@ref)** -- Kan extensions, stratification, and compositional tools
+- **[SciML Interface](@ref)** -- Integration with the SciML ecosystem
+- **[Utilities](@ref)** -- Rate conversion and population initialization helpers
+- **[PADRINO Integration](@ref)** -- Interface to the PADRINO IPM database
