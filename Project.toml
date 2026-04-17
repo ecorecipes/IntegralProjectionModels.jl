@@ -9,7 +9,7 @@ CommonSolve = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-ProjectionModels = "33358fd2-7d60-4541-bded-caea801370e0"
+StructuredPopulationCore = "33358fd2-7d60-4541-bded-caea801370e0"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -31,6 +31,9 @@ IntegralProjectionModelsMTKExt = ["ModelingToolkit", "Symbolics"]
 IntegralProjectionModelsPadrinoExt = ["CSV", "DataFrames", "Downloads"]
 IntegralProjectionModelsTuringExt = "Turing"
 
+[sources]
+StructuredPopulationCore = {path = "../StructuredPopulationCore.jl"}
+
 [compat]
 CSV = "0.10"
 Catlab = "0.17.4"
@@ -50,8 +53,10 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
+Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "SafeTestsets", "ForwardDiff", "FiniteDiff", "CSV", "DataFrames", "Downloads"]
+test = ["Test", "SafeTestsets", "ForwardDiff", "FiniteDiff", "CSV", "DataFrames", "Downloads", "OrdinaryDiffEq", "Serialization"]

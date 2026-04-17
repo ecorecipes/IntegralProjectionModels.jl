@@ -1,8 +1,8 @@
 """
 SciML ecosystem interface.
 
-Converts IPMProblems to SciMLBase.DiscreteProblem for use with
-DifferenceEquations.jl callbacks, ensemble simulations, etc.
+Converts discrete IPM problems to `DiscreteProblem` and continuous generator
+problems to `ODEProblem` / `DDEProblem`.
 """
 
 """

@@ -3,14 +3,13 @@ module IntegralProjectionModels
 using CommonSolve
 using Distributions
 using LinearAlgebra
-using ProjectionModels
+using StructuredPopulationCore
 using RecipesBase
 using SciMLBase
 using Statistics
 using StatsFuns: logistic
 
-# Domain types
-include("domains.jl")
+# Domain types (re-exported shared abstractions from StructuredPopulationCore)
 export ContinuousDomain, DiscreteDomain
 export meshpoints, step_size, bounds, n_states
 
@@ -49,10 +48,10 @@ export ComposedKernel, MegaKernel
 include("kernels/materialize.jl")
 export materialize
 
-# Trait types
-include("types.jl")
+# Trait types (re-exported shared abstractions from StructuredPopulationCore)
 export AbstractIPMStructure, SimpleIPM, GeneralIPM
-# Re-export shared types from ProjectionModels
+export AbstractContinuousStateStructure, SimpleContinuousState, GeneralContinuousState
+# Re-export shared types from StructuredPopulationCore
 export AbstractProjectionStructure
 export AbstractDensityDependence, DensityIndependent, DensityDependent
 export AbstractStochasticity, Deterministic, StochasticKernelResampled,
@@ -70,7 +69,7 @@ export IPMSolution
 using CommonSolve: solve
 export solve
 
-# Re-export shared analysis and eigenanalysis from ProjectionModels
+# Re-export shared analysis and eigenanalysis from StructuredPopulationCore
 export AbstractProjectionSolution
 export eigenanalysis_power, eigenanalysis_full
 export lambda, stable_distribution, reproductive_value
@@ -82,7 +81,7 @@ export area_under_curve
 # Time-lagged models
 include("time_lag.jl")
 export LaggedKernel, expand_lag_kernels
-# Re-export from ProjectionModels
+# Re-export from StructuredPopulationCore
 export TimeLagStructure, expand_lag_matrix, extract_lag_components
 export augment_population, extract_population
 export net_repro_rate_lagged, generation_time_lagged

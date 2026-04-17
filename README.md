@@ -70,18 +70,21 @@ E = elasticity(sol)
 
 ## Installation
 
-This package is not yet registered in the Julia General registry. Install directly from GitHub (the [ProjectionModels.jl](https://github.com/ecorecipes/ProjectionModels.jl) dependency must be installed first):
+This package is not yet registered in the Julia General registry. Install directly from GitHub (the [ProjectionModels.jl](https://github.com/ecorecipes/StructuredPopulationCore.jl) dependency must be installed first):
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/ecorecipes/ProjectionModels.jl")
+Pkg.add(url="https://github.com/ecorecipes/StructuredPopulationCore.jl")
 Pkg.add(url="https://github.com/ecorecipes/IntegralProjectionModels.jl")
 ```
 
 ## Related
 
-- [ProjectionModels.jl](https://github.com/ecorecipes/ProjectionModels.jl) — shared abstractions
+- [StructuredPopulationCore.jl](https://github.com/ecorecipes/StructuredPopulationCore.jl) — shared abstractions
 - [MatrixProjectionModels.jl](https://github.com/ecorecipes/MatrixProjectionModels.jl) — discrete-stage matrix models
-- [CategoricalProjectionModels.jl](https://github.com/ecorecipes/CategoricalProjectionModels.jl) — categorical/functorial framework
+- [FiniteStatePopulationDynamics.jl](https://github.com/ecorecipes/FiniteStatePopulationDynamics.jl) — discrete-state continuous-time dynamics
+- [ContinuousStatePopulationDynamics.jl](https://github.com/ecorecipes/ContinuousStatePopulationDynamics.jl) — continuous-state continuous-time dynamics
+- [CategoricalPopulationDynamics.jl](https://github.com/ecorecipes/CategoricalPopulationDynamics.jl) — categorical/functorial framework
+- [PhysiologicallyBasedDemographicModels.jl](https://github.com/ecorecipes/PhysiologicallyBasedDemographicModels.jl) — application-level PBDM reference suite
 - [ipmr](https://github.com/levisc8/ipmr) — R package for IPMs (design reference)
 - [PADRINO](https://github.com/padrinoDB/Rpadrino) — IPM database

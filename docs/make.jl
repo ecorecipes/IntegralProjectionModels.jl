@@ -1,9 +1,9 @@
 using Documenter
 using IntegralProjectionModels
-using ProjectionModels
+using StructuredPopulationCore
 
 makedocs(;
-    modules = [IntegralProjectionModels, ProjectionModels],
+    modules = [IntegralProjectionModels, StructuredPopulationCore],
     warnonly = true,
     authors = "Simon Frost",
     sitename = "IntegralProjectionModels.jl",

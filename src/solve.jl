@@ -192,3 +192,7 @@ function _build_param_kernel(prob::IPMProblem, params)
     kernel = prob.kernel(params)
     return materialize(kernel)
 end
+
+# Continuous-time solve methods are provided by ContinuousStatePopulationDynamics
+# on the shared CommonSolve.solve generic. IntegralProjectionModels re-exports
+# those types during the compatibility phase without redefining the methods.
