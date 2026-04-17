@@ -15,39 +15,38 @@ similar discrete solvers from the SciML ecosystem.
 """
 function to_discrete_problem(prob::IPMProblem{S, DensityIndependent, Deterministic}) where {S}
     K = materialize(prob.kernel)
+    normalize = prob.normalize
     function ipm_step!(du, u, p, t)
         mul!(du, K, u)
-        if prob.normalize
+        if normalize
             s = sum(du)
             if s > 0
                 du ./= s
             end
         end
+        return nothing
     end
-    return SciMLBase.DiscreteProblem(
-        SciMLBase.DiscreteFunctionClosure(ipm_step!),
-        prob.n0,
-        Float64.(prob.tspan),
-        prob.p)
+    p0 = prob.p === nothing ? SciMLBase.NullParameters() : prob.p
+    return SciMLBase.DiscreteProblem(ipm_step!, prob.n0, Float64.(prob.tspan), p0)
 end
 
 function to_discrete_problem(prob::IPMProblem{S, DensityDependent, Deterministic}) where {S}
+    kernel_fn = prob.kernel
+    normalize = prob.normalize
     function ipm_step!(du, u, p, t)
-        kernel = prob.kernel(u, Int(t), p)
+        kernel = kernel_fn(u, Int(t), p)
         K = materialize(kernel)
         mul!(du, K, u)
-        if prob.normalize
+        if normalize
             s = sum(du)
             if s > 0
                 du ./= s
             end
         end
+        return nothing
     end
-    return SciMLBase.DiscreteProblem(
-        SciMLBase.DiscreteFunctionClosure(ipm_step!),
-        prob.n0,
-        Float64.(prob.tspan),
-        prob.p)
+    p0 = prob.p === nothing ? SciMLBase.NullParameters() : prob.p
+    return SciMLBase.DiscreteProblem(ipm_step!, prob.n0, Float64.(prob.tspan), p0)
 end
 
 # Wrapper to make SciML's DiscreteProblem work with in-place functions
