@@ -25,11 +25,25 @@ jobs:
         arch:
           - x64
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout IntegralProjectionModels.jl
+        uses: actions/checkout@v4
+        with:
+          path: IntegralProjectionModels.jl
+      - name: Checkout StructuredPopulationCore.jl
+        uses: actions/checkout@v4
+        with:
+          repository: ecorecipes/ProjectionModels.jl
+          path: StructuredPopulationCore.jl
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v2
+        with:
+          cache-compiled: 'true'
       - uses: julia-actions/julia-buildpkg@v1
+        with:
+          project: IntegralProjectionModels.jl
       - uses: julia-actions/julia-runtest@v1
+        with:
+          project: IntegralProjectionModels.jl
