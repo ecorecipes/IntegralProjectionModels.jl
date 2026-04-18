@@ -48,12 +48,3 @@ function to_discrete_problem(prob::IPMProblem{S, DensityDependent, Deterministic
     p0 = prob.p === nothing ? SciMLBase.NullParameters() : prob.p
     return SciMLBase.DiscreteProblem(ipm_step!, prob.n0, Float64.(prob.tspan), p0)
 end
-
-# Wrapper to make SciML's DiscreteProblem work with in-place functions
-struct DiscreteFunctionClosure{F}
-    f::F
-end
-
-function (d::DiscreteFunctionClosure)(du, u, p, t)
-    d.f(du, u, p, t)
-end
