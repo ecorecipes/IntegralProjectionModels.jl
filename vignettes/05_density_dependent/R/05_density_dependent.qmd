@@ -178,7 +178,8 @@ for (i in seq_along(N0_vals)) {
 }
 abline(h = N_eq, lty = 2, lwd = 2)
 legend("topright",
-       c(paste("N₀ =", N0_vals), paste("Equilibrium ≈", round(N_eq))),
+       legend = c(sapply(N0_vals, function(n) bquote(N[0] == .(n))),
+                  bquote("Equilibrium" %~~% .(round(N_eq)))),
        col = c(cols, "black"), lty = c(rep(1, length(N0_vals)), 2),
        lwd = 2, cex = 0.7)
 ```
