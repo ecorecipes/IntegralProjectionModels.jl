@@ -1,0 +1,211 @@
+# Spectral Diagnostics and Type Hierarchy
+
+## Overview
+
+This vignette focuses on **diagnostic** tools for IPM analysis (eigenanalysis,
+ergodicity / irreducibility / primitivity checks, damping ratios, time-averaged
+kernels, area-under-the-curve helpers) and on the **type hierarchy** that
+classifies kernels, structures, vital rates and solutions. The model used
+throughout is the same monocarp from `01_introduction`.
+
+## Setup
+
+```@example ipm
+using IntegralProjectionModels
+using Distributions
+using LinearAlgebra
+using Statistics
+using Plots
+
+```
+
+## A reference monocarp model
+
+```@example ipm
+surv_int = -0.65; surv_z = 0.75
+flow_int = -18.0; flow_z = 6.9
+grow_int = 0.96;  grow_z = 0.59; grow_sd = 0.67
+rcsz_int = -0.08; rcsz_sd = 0.76
+seed_int = 1.0;   seed_z = 2.2
+p_r = 0.007
+
+L_, U_ = -2.65, 4.5
+m = 200
+domain = ContinuousDomain(L_, U_, m)
+
+surv = LinearSurvival(surv_int, surv_z)
+grow = NormalGrowth(grow_int, grow_z, grow_sd)
+fec  = LogisticFecundityRate(flow_int, flow_z, seed_int, seed_z, rcsz_int, rcsz_sd)
+
+P = PKernel(surv, grow, domain)
+F = FKernel(fec,  domain)
+K_kernel = P + F
+
+n0 = normal_population(domain, 0.0, 1.0)
+prob = IPMProblem(SimpleIPM(), DensityIndependent(), Deterministic(),
+                  K_kernel, domain, n0, (0, 100))
+sol = solve(prob)
+```
+
+The solution object has type `IPMSolution`, which is a subtype of the shared
+`AbstractProjectionSolution`:
+
+```@example ipm
+println("typeof(sol) = ", typeof(sol).name.name)
+println("sol isa IPMSolution                  = ", sol isa IPMSolution)
+println("sol isa AbstractProjectionSolution   = ", sol isa AbstractProjectionSolution)
+```
+
+## Eigenanalysis
+
+`eigenanalysis_power` runs power iteration to obtain the dominant eigenvalue
+$\lambda_1$, the stable size distribution $w$ and reproductive value $v$. It is
+fast and robust for large kernels.
+
+```@example ipm
+K = sol.kernel_matrices
+ea_pow = eigenanalysis_power(K)
+println("λ₁ (power)       = ", round(ea_pow.lambda, digits=5))
+println("‖w‖₁ (stable)    = ", round(sum(ea_pow.stable_dist), digits=5))
+println("‖v‖∞ (repro val) = ", round(maximum(ea_pow.repro_value), digits=5))
+```
+
+`eigenanalysis_full` returns the full eigendecomposition. The first two real
+parts give the dominant and subdominant eigenvalues; `damping_ratio` is the
+modulus ratio $|\lambda_1|/|\lambda_2|$ and quantifies how quickly transient
+dynamics decay onto the stable distribution.
+
+```@example ipm
+ea_full = eigenanalysis_full(K)
+ρ = damping_ratio(K)
+λ_sorted = sort(abs.(eigvals(K)); rev=true)
+println("λ₁ (full)        = ", round(ea_full.lambda, digits=5))
+println("|λ₂|             = ", round(λ_sorted[2], digits=5))
+println("damping ratio    = ", round(ρ, digits=5))
+```
+
+## Matrix properties
+
+`is_irreducible`, `is_primitive` and `is_ergodic` test the structural
+properties that justify Perron–Frobenius style asymptotic analysis.
+
+```@example ipm
+println("is_irreducible(K) = ", is_irreducible(K))
+println("is_primitive(K)   = ", is_primitive(K))
+println("is_ergodic(K)     = ", is_ergodic(K))
+```
+
+A reducible counter-example: an upper-triangular kernel whose two halves do
+not mix.
+
+```@example ipm
+K_red = copy(K); K_red[101:end, 1:100] .= 0.0
+println("reducible kernel: is_irreducible = ", is_irreducible(K_red),
+        ", is_primitive = ", is_primitive(K_red),
+        ", is_ergodic = ", is_ergodic(K_red))
+```
+
+## Time-averaged kernel and AUC integration
+
+For deterministic models `mean_kernel` simply returns the single kernel; for
+stochastic kernel-resampled solutions it averages all per-step kernels.
+
+```@example ipm
+K_bar = mean_kernel(sol)
+println("K̄ matches deterministic K? ", isapprox(K_bar, K))
+```
+
+`area_under_curve` integrates a tabulated function via the trapezoidal rule.
+We verify it on the stable size distribution $w(z)$ — the result is the
+$L_1$-norm of $w$.
+
+```@example ipm
+z = meshpoints(domain)
+w = ea_pow.stable_dist
+auc = area_under_curve(z, w)
+println("∫ w(z) dz ≈ ", round(auc, digits=5))
+```
+
+## Type hierarchy
+
+The classification of an IPM is encoded by trait objects.  All trait constants
+exported by IntegralProjectionModels are subtypes of the shared abstract types
+defined in StructuredPopulationCore.
+
+```@example ipm
+println("SimpleContinuousState() isa AbstractContinuousStateStructure = ",
+        SimpleContinuousState() isa AbstractContinuousStateStructure)
+println("GeneralContinuousState() isa AbstractContinuousStateStructure = ",
+        GeneralContinuousState() isa AbstractContinuousStateStructure)
+println("SimpleIPM()             isa AbstractIPMStructure            = ",
+        SimpleIPM() isa AbstractIPMStructure)
+println("DensityIndependent()    isa AbstractDensityDependence       = ",
+        DensityIndependent() isa AbstractDensityDependence)
+println("Deterministic()         isa AbstractStochasticity           = ",
+        Deterministic() isa AbstractStochasticity)
+```
+
+Sub-kernels and composed kernels share an abstract supertype and a kernel
+family enum.
+
+```@example ipm
+println("PKernel <: AbstractSubKernel        = ", PKernel <: AbstractSubKernel)
+println("AbstractSubKernel <: AbstractIPMKernel = ", AbstractSubKernel <: AbstractIPMKernel)
+for v in instances(KernelFamily)
+    println("  KernelFamily value: ", v)
+end
+for v in instances(EvictionCorrection)
+    println("  EvictionCorrection value: ", v)
+end
+```
+
+Vital-rate types form their own hierarchy:
+
+```@example ipm
+println("LinearSurvival       <: AbstractSurvivalRate    = ",
+        LinearSurvival       <: AbstractSurvivalRate)
+println("NormalGrowth         <: AbstractGrowthRate      = ",
+        NormalGrowth         <: AbstractGrowthRate)
+println("LogisticFecundityRate <: AbstractFecundityRate  = ",
+        LogisticFecundityRate <: AbstractFecundityRate)
+println("RecruitmentDistribution <: AbstractRecruitmentRate = ",
+        RecruitmentDistribution <: AbstractRecruitmentRate)
+println("AbstractSurvivalRate <: AbstractVitalRate       = ",
+        AbstractSurvivalRate <: AbstractVitalRate)
+```
+
+The shared `AbstractProjectionStructure` covers both IPM and matrix
+structure tags (`AbstractIPMStructure <: AbstractProjectionStructure`).
+
+```@example ipm
+println("AbstractIPMStructure <: AbstractProjectionStructure = ",
+        AbstractIPMStructure <: AbstractProjectionStructure)
+```
+
+## Visual: damping over the iteration
+
+The eigen analysis predicts that any initial condition relaxes onto $w$ at a
+rate set by the damping ratio. Plotting cosine similarity of $n_t$ vs. $w$
+makes that visible:
+
+```@example ipm
+sim(a, b) = (a ⋅ b) / (norm(a) * norm(b))
+sims = [sim(sol.u[t], w) for t in eachindex(sol.u)]
+plot(sol.t, sims, lw=2, xlabel="t", ylabel="cos(n_t, w)",
+     title="Convergence to stable distribution",
+     legend=false, size=(620, 320))
+```
+
+## Summary
+
+- `IPMSolution` is the concrete result type; it inherits from
+  `AbstractProjectionSolution`.
+- `eigenanalysis_power` is fast and stable; `eigenanalysis_full` exposes the
+  whole spectrum and underpins `damping_ratio`.
+- `is_irreducible`, `is_primitive`, `is_ergodic` test structural assumptions
+  before relying on asymptotic theory.
+- `mean_kernel` and `area_under_curve` are utility helpers that work on
+  solutions and tabulated functions, respectively.
+- All structures, kernels, vital rates and solutions are organised under
+  abstract types re-exported from `StructuredPopulationCore`, enabling
+  uniform dispatch across packages.

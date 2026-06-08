@@ -1,0 +1,114 @@
+# PADRINO Validation: Test Targets and λ Reproducibility
+
+## Overview
+
+The companion vignette `10_padrino` introduced the PADRINO database loader and
+the `pdb_make_ipm` builder.  This vignette focuses on **validation**: the
+helpers that let you check whether a PADRINO model, once rebuilt and solved
+inside IntegralProjectionModels.jl, reproduces the dominant eigenvalue
+$\lambda$ that is recorded in the database.
+
+The key entry points are:
+
+- `PadrinoDB`  — the loaded database (a wrapper around the published tables);
+- `PadrinoModel` — the parsed proto-IPM produced by `pdb_make_proto_ipm`;
+- `pdb_test_targets(pdb; ipm_id)` — the table of expected $\lambda$ values;
+- `pdb_validate(ipms, pdb; rtol)` — runs each IPM and compares its computed
+  $\lambda$ against the test target, returning a tidy DataFrame.
+
+## Setup
+
+```@example ipm
+using IntegralProjectionModels
+using CSV, DataFrames, Downloads
+
+```
+
+## Loading the database
+
+```@example ipm
+pdb = pdb_download()
+println("typeof(pdb).name.name = ", typeof(pdb).name.name)
+println("pdb isa PadrinoDB     = ", pdb isa PadrinoDB)
+println("# tables              = ", length(pdb.tables))
+```
+
+We restrict ourselves to a small subset of well-known models so the rest of
+the vignette stays fast.
+
+```@example ipm
+ids = ["aaa310", "aaa341"]
+sub = pdb_subset(pdb, ids)
+println("subset species: ", pdb_species(sub))
+```
+
+## Inspecting test targets
+
+`pdb_test_targets` extracts the published validation targets from the
+`Metadata` table.  Each row pairs an `ipm_id` with the expected $\lambda$
+value (and species name when available).
+
+```@example ipm
+targets = pdb_test_targets(sub)
+targets
+```
+
+Filtering by id works the same as in the other `pdb_*` queries:
+
+```@example ipm
+pdb_test_targets(sub; ipm_id="aaa310")
+```
+
+## Building proto-IPMs and inspecting `PadrinoModel`
+
+`pdb_make_proto_ipm` parses each PADRINO entry into a `PadrinoModel` —
+the intermediate representation that holds vital-rate expressions, domain
+information, and parameter dictionaries before the kernel is materialised.
+
+```@example ipm
+protos = pdb_make_proto_ipm(sub; ipm_id=ids)
+println("typeof(protos)               = ", typeof(protos).name.name)
+proto_310 = protos["aaa310"]
+println("typeof(proto_310).name.name  = ", typeof(proto_310).name.name)
+println("proto_310 isa PadrinoModel   = ", proto_310 isa PadrinoModel)
+```
+
+The proto is then compiled into a fully built `IPMProblem` with
+`pdb_make_ipm`:
+
+```@example ipm
+ipms = pdb_make_ipm(protos; tspan=(0, 100))
+println("# ipms built = ", length(ipms))
+```
+
+## Validating against published λ values
+
+`pdb_validate` solves each IPM, computes its dominant eigenvalue, and
+compares it to the published target with relative tolerance `rtol`.  The
+returned DataFrame has columns `ipm_id`, `species`, `expected_lambda`,
+`computed_lambda`, `abs_error`, and `matches`.
+
+```@example ipm
+report = pdb_validate(ipms, sub; rtol=0.05)
+report
+```
+
+A summary across the full subset:
+
+```@example ipm
+n_total = nrow(report)
+n_ok    = sum(skipmissing(report.matches))
+println("models checked     = ", n_total)
+println("models matching λ  = ", n_ok)
+```
+
+## Summary
+
+- `PadrinoDB` and `PadrinoModel` are the two concrete types that anchor the
+  PADRINO interop layer.
+- `pdb_test_targets` exposes the curated $\lambda$ values stored in
+  `Metadata`.
+- `pdb_validate` is the one-call regression check: build → solve → compare
+  → tidy DataFrame.  Use it whenever you change parsing, eviction handling,
+  or vital-rate compilation in the PADRINO extension to confirm that
+  published models still reproduce.
