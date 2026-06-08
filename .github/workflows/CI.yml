@@ -64,6 +64,11 @@ jobs:
         with:
           repository: ecorecipes/ProjectionModels.jl
           path: StructuredPopulationCore.jl
+      - name: Checkout MatrixProjectionModels.jl
+        uses: actions/checkout@v4
+        with:
+          repository: ecorecipes/MatrixProjectionModels.jl
+          path: MatrixProjectionModels.jl
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1'
@@ -76,6 +81,7 @@ jobs:
             using Pkg
             Pkg.develop([
               PackageSpec(path="StructuredPopulationCore.jl"),
+              PackageSpec(path="MatrixProjectionModels.jl"),
               PackageSpec(path="IntegralProjectionModels.jl"),
             ])
             Pkg.instantiate()'
