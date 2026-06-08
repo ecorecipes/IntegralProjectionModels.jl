@@ -49,4 +49,5 @@ makedocs(;
 
 deploydocs(;
     repo = "github.com/ecorecipes/IntegralProjectionModels.jl.git",
+    push_preview = true,
 )
