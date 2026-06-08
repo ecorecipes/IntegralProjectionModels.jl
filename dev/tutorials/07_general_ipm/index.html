@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>General IPM with Seed Bank · IntegralProjectionModels.jl</title><meta name="title" content="General IPM with Seed Bank · IntegralProjectionModels.jl"/><meta property="og:title" content="General IPM with Seed Bank · IntegralProjectionModels.jl"/><meta property="twitter:title" content="General IPM with Seed Bank · IntegralProjectionModels.jl"/><meta name="description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="twitter:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/07_general_ipm/"/><meta property="twitter:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/07_general_ipm/"/><link rel="canonical" href="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/07_general_ipm/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">IntegralProjectionModels.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../01_introduction/">Introduction to Integral Projection Models</a></li><li><a class="tocitem" href="../02_ungulate/">Ungulate IPM: Soay Sheep</a></li><li><a class="tocitem" href="../03_eviction/">Eviction Correction</a></li><li><a class="tocitem" href="../04_sensitivity_elasticity/">Sensitivity and Elasticity Analysis</a></li><li><a class="tocitem" href="../05_density_dependent/">Density-Dependent IPMs</a></li><li><a class="tocitem" href="../06_stochastic/">Stochastic IPMs</a></li><li class="is-active"><a class="tocitem" href>General IPM with Seed Bank</a><ul class="internal"><li><a class="tocitem" href="#Overview"><span>Overview</span></a></li><li><a class="tocitem" href="#Setup"><span>Setup</span></a></li><li><a class="tocitem" href="#The-Ligustrum-Model"><span>The Ligustrum Model</span></a></li><li><a class="tocitem" href="#Parameters"><span>Parameters</span></a></li><li><a class="tocitem" href="#Domain"><span>Domain</span></a></li><li><a class="tocitem" href="#Vital-Rate-Functions"><span>Vital Rate Functions</span></a></li><li><a class="tocitem" href="#Building-the-Mega-Kernel"><span>Building the Mega-Kernel</span></a></li><li><a class="tocitem" href="#Eigenanalysis"><span>Eigenanalysis</span></a></li><li><a class="tocitem" href="#Visualizing-the-Mega-Kernel"><span>Visualizing the Mega-Kernel</span></a></li><li><a class="tocitem" href="#Stable-Distribution"><span>Stable Distribution</span></a></li><li><a class="tocitem" href="#Vital-Rate-Diagnostics"><span>Vital Rate Diagnostics</span></a></li><li><a class="tocitem" href="#Population-Dynamics"><span>Population Dynamics</span></a></li><li><a class="tocitem" href="#Comparing-Treatments"><span>Comparing Treatments</span></a></li><li><a class="tocitem" href="#Block-Structure-Explained"><span>Block Structure Explained</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../08_age_size/">Age x Size IPM</a></li><li><a class="tocitem" href="../09_categorical/">Categorical Composition of IPMs</a></li><li><a class="tocitem" href="../10_padrino/">PADRINO Database Integration</a></li><li><a class="tocitem" href="../11_evolving_ipm/">Evolving IPMs: Evolutionary Demography</a></li><li><a class="tocitem" href="../12_time_lag/">Time-Lagged Integral Projection Models</a></li><li><a class="tocitem" href="../13_diagnostics/">Spectral Diagnostics and Type Hierarchy</a></li><li><a class="tocitem" href="../14_kernels_and_helpers/">Kernel Composition and Helpers</a></li><li><a class="tocitem" href="../15_padrino_validation/">PADRINO Validation: Test Targets and λ Reproducibility</a></li><li><a class="tocitem" href="../16_lag_metrics/">Time-Lag Metrics: Augmentation, R0, and Generation Time</a></li><li><a class="tocitem" href="../17_ipm_mpm_bridge/">IPM ↔ MPM Discretization Bridge</a></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../api/domains/">Domains</a></li><li><a class="tocitem" href="../../api/vital_rates/">Vital Rates</a></li><li><a class="tocitem" href="../../api/kernels/">Kernels</a></li><li><a class="tocitem" href="../../api/types/">Types &amp; Traits</a></li><li><a class="tocitem" href="../../api/problems/">Problem &amp; Solution</a></li><li><a class="tocitem" href="../../api/analysis/">Analysis</a></li><li><a class="tocitem" href="../../api/time_lag/">Time-Lag Models</a></li><li><a class="tocitem" href="../../api/age_size/">Age×Size Models</a></li><li><a class="tocitem" href="../../api/categorical/">Categorical Composition</a></li><li><a class="tocitem" href="../../api/sciml/">SciML Interface</a></li><li><a class="tocitem" href="../../api/utilities/">Utilities</a></li><li><a class="tocitem" href="../../api/padrino/">PADRINO Integration</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>General IPM with Seed Bank</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>General IPM with Seed Bank</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/docs/src/tutorials/07_general_ipm.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="General-IPM-with-Seed-Bank"><a class="docs-heading-anchor" href="#General-IPM-with-Seed-Bank">General IPM with Seed Bank</a><a id="General-IPM-with-Seed-Bank-1"></a><a class="docs-heading-anchor-permalink" href="#General-IPM-with-Seed-Bank" title="Permalink"></a></h1><h2 id="Overview"><a class="docs-heading-anchor" href="#Overview">Overview</a><a id="Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Overview" title="Permalink"></a></h2><p>A <strong>general IPM</strong> models populations with multiple state variables — both continuous (e.g., size) and discrete (e.g., seed bank, dormancy stage). The kernel becomes a block-structured <strong>mega-kernel</strong> with transitions between all state combinations.</p><p>This vignette models <em>Ligustrum obtusifolium</em> (border privet) with a discrete seed bank and continuous height, following Levin et al. (2019). We compare two treatments: <strong>control</strong> and <strong>crown removal (CR)</strong>.</p><h2 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h2><pre><code class="language-julia hljs">using IntegralProjectionModels
+using Distributions
+using LinearAlgebra
+using Plots</code></pre><h2 id="The-Ligustrum-Model"><a class="docs-heading-anchor" href="#The-Ligustrum-Model">The Ligustrum Model</a><a id="The-Ligustrum-Model-1"></a><a class="docs-heading-anchor-permalink" href="#The-Ligustrum-Model" title="Permalink"></a></h2><p>The population has two states:</p><ul><li><strong>Height</strong> (<code>ht</code>): continuous, measured in cm — domain <span>$[1.02, 624]$</span></li><li><strong>Seed bank</strong> (<code>b</code>): discrete, a single pool of seeds in the soil</li></ul><p>The mega-kernel has four blocks:</p><p>$</p><p>K = \begin{pmatrix} K<em>{CC} &amp; K</em>{DC} \
+K<em>{CD} &amp; K</em>{DD} \end{pmatrix} $</p><p>where:</p><ul><li><p class="math-container">\[K_{CC}\]</p>(continuous → continuous): survival-growth (P kernel)</li><li><p class="math-container">\[K_{CD}\]</p>(continuous → discrete): seeds entering the seed bank</li><li><p class="math-container">\[K_{DC}\]</p>(discrete → continuous): seedlings emerging from the seed bank</li><li><p class="math-container">\[K_{DD}\]</p>(discrete → discrete): seeds staying in the seed bank (= 0 in this model)</li></ul><h2 id="Parameters"><a class="docs-heading-anchor" href="#Parameters">Parameters</a><a id="Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Parameters" title="Permalink"></a></h2><h3 id="Control-Treatment"><a class="docs-heading-anchor" href="#Control-Treatment">Control Treatment</a><a id="Control-Treatment-1"></a><a class="docs-heading-anchor-permalink" href="#Control-Treatment" title="Permalink"></a></h3><pre><code class="language-julia hljs">ctrl = (
+    g_int     = 5.781,       # growth intercept
+    g_slope   = 0.988,       # growth slope
+    g_sd      = 20.55699,    # growth SD
+    s_int     = -0.352,      # survival intercept
+    s_slope   = 0.122,       # survival slope (linear)
+    s_slope_2 = -0.000213,   # survival slope (quadratic)
+    f_r_int   = -11.46,      # reproduction probability intercept
+    f_r_slope = 0.0835,      # reproduction probability slope
+    f_s_int   = 2.6204,      # seed production intercept
+    f_s_slope = 0.01256,     # seed production slope
+    f_d_mu    = 5.6655,      # offspring size mean
+    f_d_sd    = 2.0734,      # offspring size SD
+    e_p       = 0.15,        # seedling establishment probability
+    g_i       = 0.5067,      # probability of going to seed bank
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(g_int = 5.781, g_slope = 0.988, g_sd = 20.55699, s_int = -0.352, s_slope = 0.122, s_slope_2 = -0.000213, f_r_int = -11.46, f_r_slope = 0.0835, f_s_int = 2.6204, f_s_slope = 0.01256, f_d_mu = 5.6655, f_d_sd = 2.0734, e_p = 0.15, g_i = 0.5067)</code></pre><h3 id="CR-Treatment"><a class="docs-heading-anchor" href="#CR-Treatment">CR Treatment</a><a id="CR-Treatment-1"></a><a class="docs-heading-anchor-permalink" href="#CR-Treatment" title="Permalink"></a></h3><pre><code class="language-julia hljs">cr = (
+    g_int     = 7.229,
+    g_slope   = 0.988,
+    g_sd      = 21.72262,
+    s_int     = 0.0209,
+    s_slope   = 0.0831,
+    s_slope_2 = -0.00012999,
+    f_r_int   = -11.46,
+    f_r_slope = 0.0835,
+    f_s_int   = 2.6204,
+    f_s_slope = 0.01256,
+    f_d_mu    = 5.6655,
+    f_d_sd    = 2.0734,
+    e_p       = 0.15,
+    g_i       = 0.5067,
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(g_int = 7.229, g_slope = 0.988, g_sd = 21.72262, s_int = 0.0209, s_slope = 0.0831, s_slope_2 = -0.00012999, f_r_int = -11.46, f_r_slope = 0.0835, f_s_int = 2.6204, f_s_slope = 0.01256, f_d_mu = 5.6655, f_d_sd = 2.0734, e_p = 0.15, g_i = 0.5067)</code></pre><h2 id="Domain"><a class="docs-heading-anchor" href="#Domain">Domain</a><a id="Domain-1"></a><a class="docs-heading-anchor-permalink" href="#Domain" title="Permalink"></a></h2><pre><code class="language-julia hljs">L = 1.02
+U = 624.0
+n = 500
+
+ht_domain = ContinuousDomain(L, U, n)
+b_domain = DiscreteDomain([:seeds])
+
+z = meshpoints(ht_domain)
+h = step_size(ht_domain)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1.24596</code></pre><h2 id="Vital-Rate-Functions"><a class="docs-heading-anchor" href="#Vital-Rate-Functions">Vital Rate Functions</a><a id="Vital-Rate-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Vital-Rate-Functions" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Quadratic survival (logistic)
+function survival(z, p)
+    return 1.0 / (1.0 + exp(-(p.s_int + p.s_slope * z + p.s_slope_2 * z^2)))
+end
+
+# Growth with truncated distributions correction
+function growth(z_prime, z, p)
+    mu = p.g_int + p.g_slope * z
+    d = Normal(mu, p.g_sd)
+    ev = cdf(d, U) - cdf(d, L)
+    return ev &gt; 0 ? pdf(d, z_prime) / ev : pdf(d, z_prime)
+end
+
+# Reproduction probability (logistic)
+function repr_prob(z, p)
+    return 1.0 / (1.0 + exp(-(p.f_r_int + p.f_r_slope * z)))
+end
+
+# Seed production (exponential)
+function seed_prod(z, p)
+    return exp(p.f_s_int + p.f_s_slope * z)
+end
+
+# Offspring size distribution (truncated normal)
+function offspring_size(z_prime, p)
+    d = Normal(p.f_d_mu, p.f_d_sd)
+    ev = cdf(d, U) - cdf(d, L)
+    return ev &gt; 0 ? pdf(d, z_prime) / ev : pdf(d, z_prime)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">offspring_size (generic function with 1 method)</code></pre><h2 id="Building-the-Mega-Kernel"><a class="docs-heading-anchor" href="#Building-the-Mega-Kernel">Building the Mega-Kernel</a><a id="Building-the-Mega-Kernel-1"></a><a class="docs-heading-anchor-permalink" href="#Building-the-Mega-Kernel" title="Permalink"></a></h2><h3 id="CC-Block:-Survival-Growth"><a class="docs-heading-anchor" href="#CC-Block:-Survival-Growth">CC Block: Survival-Growth</a><a id="CC-Block:-Survival-Growth-1"></a><a class="docs-heading-anchor-permalink" href="#CC-Block:-Survival-Growth" title="Permalink"></a></h3><p>The survival-growth kernel <span>$P(z&#39;, z) = s(z) \cdot g(z&#39;|z)$</span> uses quadratic survival.</p><pre><code class="language-julia hljs">function build_model(p)
+    # CC: survival × growth
+    cc_kernel = PKernel(
+        CustomVitalRate(z -&gt; survival(z, p)),
+        CustomVitalRate((z_prime, z) -&gt; growth(z_prime, z, p)),
+        ht_domain
+    )
+
+    # CD: continuous → discrete (seeds entering bank)
+    # go_discrete(z) = f_r(z) × f_s(z) × g_i (scalar per z, becomes a 1×n row)
+    cd_func(z) = repr_prob(z, p) * seed_prod(z, p) * p.g_i
+    cd_values = [cd_func(zi) for zi in z]
+    cd_matrix = reshape(cd_values, 1, n)  # 1 × n matrix
+
+    # DC: discrete → continuous (seedlings emerging from bank)
+    # leave_discrete(z&#39;) = e_p × f_d(z&#39;) × h (n×1 column)
+    dc_values = [p.e_p * offspring_size(zi, p) * h for zi in z]
+    dc_matrix = reshape(dc_values, n, 1)  # n × 1 matrix
+
+    # DD: discrete → discrete (stay in bank) = 0
+    dd_matrix = zeros(1, 1)
+
+    # Build MegaKernel
+    states = (ht=ht_domain, b=b_domain)
+    mega = MegaKernel(;
+        states=states,
+        ht_to_ht=cc_kernel,
+        ht_to_b=MatrixKernel(cd_matrix),
+        b_to_ht=MatrixKernel(dc_matrix),
+        b_to_b=MatrixKernel(dd_matrix)
+    )
+
+    return mega
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">build_model (generic function with 1 method)</code></pre><h3 id="Build-Both-Models"><a class="docs-heading-anchor" href="#Build-Both-Models">Build Both Models</a><a id="Build-Both-Models-1"></a><a class="docs-heading-anchor-permalink" href="#Build-Both-Models" title="Permalink"></a></h3><pre><code class="language-julia hljs">mega_ctrl = build_model(ctrl)
+mega_cr = build_model(cr)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">MegaKernel{Dict{Tuple{Symbol, Symbol}, AbstractIPMKernel}, @NamedTuple{ht::ContinuousDomain{Float64}, b::DiscreteDomain}}(Dict{Tuple{Symbol, Symbol}, AbstractIPMKernel}((:ht, :b) =&gt; MatrixKernel{Matrix{Float64}}([8.596041988851835e-5 9.688963508184893e-5 … 17232.11283039708 17503.903719128037]), (:b, :ht) =&gt; MatrixKernel{Matrix{Float64}}([0.005546155175101325; 0.014855665335770676; … ; 0.0; 0.0;;]), (:b, :b) =&gt; MatrixKernel{Matrix{Float64}}([0.0;;]), (:ht, :ht) =&gt; PKernel{CustomVitalRate{Main.var&quot;#build_model##0#build_model##1&quot;{@NamedTuple{g_int::Float64, g_slope::Float64, g_sd::Float64, s_int::Float64, s_slope::Float64, s_slope_2::Float64, f_r_int::Float64, f_r_slope::Float64, f_s_int::Float64, f_s_slope::Float64, f_d_mu::Float64, f_d_sd::Float64, e_p::Float64, g_i::Float64}}, Nothing}, CustomVitalRate{Main.var&quot;#build_model##2#build_model##3&quot;{@NamedTuple{g_int::Float64, g_slope::Float64, g_sd::Float64, s_int::Float64, s_slope::Float64, s_slope_2::Float64, f_r_int::Float64, f_r_slope::Float64, f_s_int::Float64, f_s_slope::Float64, f_d_mu::Float64, f_d_sd::Float64, e_p::Float64, g_i::Float64}}, Nothing}, ContinuousDomain{Float64}}(CustomVitalRate{Main.var&quot;#build_model##0#build_model##1&quot;{@NamedTuple{g_int::Float64, g_slope::Float64, g_sd::Float64, s_int::Float64, s_slope::Float64, s_slope_2::Float64, f_r_int::Float64, f_r_slope::Float64, f_s_int::Float64, f_s_slope::Float64, f_d_mu::Float64, f_d_sd::Float64, e_p::Float64, g_i::Float64}}, Nothing}(Main.var&quot;#build_model##0#build_model##1&quot;{@NamedTuple{g_int::Float64, g_slope::Float64, g_sd::Float64, s_int::Float64, s_slope::Float64, s_slope_2::Float64, f_r_int::Float64, f_r_slope::Float64, f_s_int::Float64, f_s_slope::Float64, f_d_mu::Float64, f_d_sd::Float64, e_p::Float64, g_i::Float64}}((g_int = 7.229, g_slope = 0.988, g_sd = 21.72262, s_int = 0.0209, s_slope = 0.0831, s_slope_2 = -0.00012999, f_r_int = -11.46, f_r_slope = 0.0835, f_s_int = 2.6204, f_s_slope = 0.01256, f_d_mu = 5.6655, f_d_sd = 2.0734, e_p = 0.15, g_i = 0.5067)), nothing), CustomVitalRate{Main.var&quot;#build_model##2#build_model##3&quot;{@NamedTuple{g_int::Float64, g_slope::Float64, g_sd::Float64, s_int::Float64, s_slope::Float64, s_slope_2::Float64, f_r_int::Float64, f_r_slope::Float64, f_s_int::Float64, f_s_slope::Float64, f_d_mu::Float64, f_d_sd::Float64, e_p::Float64, g_i::Float64}}, Nothing}(Main.var&quot;#build_model##2#build_model##3&quot;{@NamedTuple{g_int::Float64, g_slope::Float64, g_sd::Float64, s_int::Float64, s_slope::Float64, s_slope_2::Float64, f_r_int::Float64, f_r_slope::Float64, f_s_int::Float64, f_s_slope::Float64, f_d_mu::Float64, f_d_sd::Float64, e_p::Float64, g_i::Float64}}((g_int = 7.229, g_slope = 0.988, g_sd = 21.72262, s_int = 0.0209, s_slope = 0.0831, s_slope_2 = -0.00012999, f_r_int = -11.46, f_r_slope = 0.0835, f_s_int = 2.6204, f_s_slope = 0.01256, f_d_mu = 5.6655, f_d_sd = 2.0734, e_p = 0.15, g_i = 0.5067)), nothing), ContinuousDomain{Float64}(1.02, 624.0, 500), NoCorrection)), (ht = ContinuousDomain{Float64}(1.02, 624.0, 500), b = DiscreteDomain([:seeds])))</code></pre><h2 id="Eigenanalysis"><a class="docs-heading-anchor" href="#Eigenanalysis">Eigenanalysis</a><a id="Eigenanalysis-1"></a><a class="docs-heading-anchor-permalink" href="#Eigenanalysis" title="Permalink"></a></h2><pre><code class="language-julia hljs">K_ctrl = materialize(mega_ctrl)
+K_cr = materialize(mega_cr)
+
+println(&quot;Mega-kernel size: &quot;, size(K_ctrl), &quot; ($(n) height + 1 seed bank)&quot;)
+
+# Eigenanalysis
+e_ctrl = eigen(K_ctrl)
+e_cr = eigen(K_cr)
+
+λ_ctrl = real(e_ctrl.values[argmax(real.(e_ctrl.values))])
+λ_cr = real(e_cr.values[argmax(real.(e_cr.values))])
+
+println(&quot;\nControl treatment:&quot;)
+println(&quot;  λ = &quot;, round(λ_ctrl, digits=4))
+println(&quot;\nCrown removal treatment:&quot;)
+println(&quot;  λ = &quot;, round(λ_cr, digits=4))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Mega-kernel size: (501, 501) (500 height + 1 seed bank)
+
+Control treatment:
+  λ = 1.2221
+
+Crown removal treatment:
+  λ = 1.2586</code></pre><h3 id="Published-Values"><a class="docs-heading-anchor" href="#Published-Values">Published Values</a><a id="Published-Values-1"></a><a class="docs-heading-anchor-permalink" href="#Published-Values" title="Permalink"></a></h3><p>The published values from Levin et al. (2019) are:</p><ul><li>Control: <span>$\lambda \approx 1.22$</span></li><li>CR: <span>$\lambda \approx 1.26$</span></li></ul><pre><code class="language-julia hljs">println(&quot;Comparison with published values:&quot;)
+println(&quot;  Control: computed=$(round(λ_ctrl, digits=2)), published=1.22, &quot;,
+    &quot;diff=$(round(abs(λ_ctrl - 1.22), digits=3))&quot;)
+println(&quot;  CR:      computed=$(round(λ_cr, digits=2)), published=1.26, &quot;,
+    &quot;diff=$(round(abs(λ_cr - 1.26), digits=3))&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Comparison with published values:
+  Control: computed=1.22, published=1.22, diff=0.002
+  CR:      computed=1.26, published=1.26, diff=0.001</code></pre><h2 id="Visualizing-the-Mega-Kernel"><a class="docs-heading-anchor" href="#Visualizing-the-Mega-Kernel">Visualizing the Mega-Kernel</a><a id="Visualizing-the-Mega-Kernel-1"></a><a class="docs-heading-anchor-permalink" href="#Visualizing-the-Mega-Kernel" title="Permalink"></a></h2><pre><code class="language-julia hljs">heatmap(K_ctrl,
+    title=&quot;Mega-kernel (control)&quot;,
+    xlabel=&quot;State index&quot;,
+    ylabel=&quot;State index&quot;,
+    color=:viridis,
+    size=(600, 500))</code></pre><img src="1d896b46.svg" alt="Example block output"/><p>Let us zoom in on the CC (height × height) block.</p><pre><code class="language-julia hljs">CC_ctrl = K_ctrl[1:n, 1:n]
+
+heatmap(z, z, CC_ctrl,
+    title=&quot;CC block: survival-growth (control)&quot;,
+    xlabel=&quot;Height (t)&quot;,
+    ylabel=&quot;Height (t+1)&quot;,
+    color=:viridis)</code></pre><img src="9c1b7520.svg" alt="Example block output"/><h2 id="Stable-Distribution"><a class="docs-heading-anchor" href="#Stable-Distribution">Stable Distribution</a><a id="Stable-Distribution-1"></a><a class="docs-heading-anchor-permalink" href="#Stable-Distribution" title="Permalink"></a></h2><pre><code class="language-julia hljs">idx_ctrl = argmax(real.(e_ctrl.values))
+w_ctrl = real.(e_ctrl.vectors[:, idx_ctrl])
+w_ctrl ./= sum(w_ctrl)
+
+# Separate height and seed bank components
+w_ht = w_ctrl[1:n]
+w_b = w_ctrl[n+1]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.7357664436732978</code></pre><pre><code class="language-julia hljs">println(&quot;Proportion in height classes: &quot;, round(sum(w_ht), digits=4))
+println(&quot;Proportion in seed bank: &quot;, round(w_b, digits=4))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Proportion in height classes: 0.2642
+Proportion in seed bank: 0.7358</code></pre><pre><code class="language-julia hljs">plot(z, w_ht,
+    xlabel=&quot;Height (cm)&quot;, ylabel=&quot;Proportion&quot;,
+    title=&quot;Stable height distribution (control)&quot;,
+    label=&quot;w(z)&quot;, linewidth=2, fill=(0, 0.3, :blue))</code></pre><img src="1a220c44.svg" alt="Example block output"/><h2 id="Vital-Rate-Diagnostics"><a class="docs-heading-anchor" href="#Vital-Rate-Diagnostics">Vital Rate Diagnostics</a><a id="Vital-Rate-Diagnostics-1"></a><a class="docs-heading-anchor-permalink" href="#Vital-Rate-Diagnostics" title="Permalink"></a></h2><pre><code class="language-julia hljs">p1 = plot(z, [survival(zi, ctrl) for zi in z],
+    xlabel=&quot;Height&quot;, ylabel=&quot;Probability&quot;,
+    title=&quot;Quadratic survival&quot;, linewidth=2,
+    label=&quot;Control&quot;)
+plot!(p1, z, [survival(zi, cr) for zi in z],
+    label=&quot;CR&quot;, linewidth=2, linestyle=:dash)
+
+p2 = plot(z, [repr_prob(zi, ctrl) for zi in z],
+    xlabel=&quot;Height&quot;, ylabel=&quot;Probability&quot;,
+    title=&quot;Reproduction probability&quot;, linewidth=2,
+    label=false)
+
+p3 = plot(z, [seed_prod(zi, ctrl) for zi in z],
+    xlabel=&quot;Height&quot;, ylabel=&quot;Seeds&quot;,
+    title=&quot;Seed production&quot;, linewidth=2,
+    label=false)
+
+z_off = range(0, 30, length=200)
+p4 = plot(z_off, [offspring_size(zi, ctrl) for zi in z_off],
+    xlabel=&quot;Offspring height&quot;, ylabel=&quot;Density&quot;,
+    title=&quot;Offspring size distribution&quot;, linewidth=2,
+    label=false)
+
+plot(p1, p2, p3, p4, layout=(2, 2), size=(800, 600))</code></pre><img src="38921033.svg" alt="Example block output"/><h2 id="Population-Dynamics"><a class="docs-heading-anchor" href="#Population-Dynamics">Population Dynamics</a><a id="Population-Dynamics-1"></a><a class="docs-heading-anchor-permalink" href="#Population-Dynamics" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Iterate the control model
+n0_general = vcat(uniform_population(ht_domain), [20.0])  # 20 seeds in bank
+
+prob_ctrl = IPMProblem(GeneralIPM(), mega_ctrl, (ht=ht_domain, b=b_domain),
+    n0_general, (0, 100))
+sol_ctrl = solve(prob_ctrl)
+
+plot(sol_ctrl.lambdas,
+    xlabel=&quot;Time step&quot;, ylabel=&quot;λ(t)&quot;,
+    title=&quot;Per-step growth rate (control)&quot;,
+    label=&quot;λ(t)&quot;, linewidth=1)
+hline!([λ_ctrl], label=&quot;Asymptotic λ&quot;, linestyle=:dash, color=:red, linewidth=2)</code></pre><img src="cde1ab94.svg" alt="Example block output"/><h2 id="Comparing-Treatments"><a class="docs-heading-anchor" href="#Comparing-Treatments">Comparing Treatments</a><a id="Comparing-Treatments-1"></a><a class="docs-heading-anchor-permalink" href="#Comparing-Treatments" title="Permalink"></a></h2><pre><code class="language-julia hljs">bar([&quot;Control&quot;, &quot;Crown Removal&quot;], [λ_ctrl, λ_cr],
+    ylabel=&quot;λ&quot;,
+    title=&quot;Treatment comparison&quot;,
+    label=false,
+    color=[:steelblue :coral],
+    ylim=(1.0, 1.35))
+hline!([1.0], label=&quot;λ = 1&quot;, linestyle=:dash, color=:black)</code></pre><img src="fc397e3a.svg" alt="Example block output"/><p>The crown removal treatment has a <em>higher</em> <span>$\lambda$</span> than the control, suggesting that the removal of competing crown cover facilitates Ligustrum invasion.</p><h2 id="Block-Structure-Explained"><a class="docs-heading-anchor" href="#Block-Structure-Explained">Block Structure Explained</a><a id="Block-Structure-Explained-1"></a><a class="docs-heading-anchor-permalink" href="#Block-Structure-Explained" title="Permalink"></a></h2><p>The mega-kernel structure:</p><pre><code class="nohighlight hljs">            Current state
+            ht (500)    b (1)
+          ┌──────────┬────────┐
+Next  ht  │  CC: P   │  DC:   │
+state     │  s×g     │  e_p×  │
+(500)     │  (500×500)│  f_d   │
+          │          │  (500×1)│
+          ├──────────┼────────┤
+      b   │  CD:     │  DD:   │
+     (1)  │  f_r×f_s │   0    │
+          │  ×g_i    │  (1×1) │
+          │  (1×500) │        │
+          └──────────┴────────┘</code></pre><ul><li><strong>CC</strong> (<span>$500 \times 500$</span>): Surviving plants grow (normal growth with truncation)</li><li><strong>CD</strong> (<span>$1 \times 500$</span>): Reproducing plants send seeds to the bank (<span>$f_r \times f_s \times g_i$</span>)</li><li><strong>DC</strong> (<span>$500 \times 1$</span>): Seeds germinate and establish as seedlings (<span>$e_p \times f_d$</span>)</li><li><strong>DD</strong> (<span>$1 \times 1$</span>): Seeds do not stay in the bank (= 0 in this model)</li></ul><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>In this vignette we:</p><ol><li>Built a <strong>general IPM</strong> with a continuous height state and a discrete seed bank</li><li>Used <code>MegaKernel</code> to define the block-structured kernel with CC, CD, DC, and DD transitions</li><li>Used <code>MatrixKernel</code> for transitions involving discrete states</li><li>Applied truncated distributions eviction correction to both growth and offspring size</li><li>Computed <span>$\lambda$</span> for control (<span>$\approx 1.22$</span>) and crown removal (<span>$\approx 1.26$</span>) treatments</li><li>Validated against published results from Levin et al. (2019)</li></ol></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../06_stochastic/">« Stochastic IPMs</a><a class="docs-footer-nextpage" href="../08_age_size/">Age x Size IPM »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 8 June 2026 23:57">Monday 8 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

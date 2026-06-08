@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Ungulate IPM: Soay Sheep · IntegralProjectionModels.jl</title><meta name="title" content="Ungulate IPM: Soay Sheep · IntegralProjectionModels.jl"/><meta property="og:title" content="Ungulate IPM: Soay Sheep · IntegralProjectionModels.jl"/><meta property="twitter:title" content="Ungulate IPM: Soay Sheep · IntegralProjectionModels.jl"/><meta name="description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="twitter:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/02_ungulate/"/><meta property="twitter:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/02_ungulate/"/><link rel="canonical" href="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/02_ungulate/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">IntegralProjectionModels.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../01_introduction/">Introduction to Integral Projection Models</a></li><li class="is-active"><a class="tocitem" href>Ungulate IPM: Soay Sheep</a><ul class="internal"><li><a class="tocitem" href="#Overview"><span>Overview</span></a></li><li><a class="tocitem" href="#Setup"><span>Setup</span></a></li><li><a class="tocitem" href="#Parameters"><span>Parameters</span></a></li><li><a class="tocitem" href="#Domain"><span>Domain</span></a></li><li><a class="tocitem" href="#Vital-Rate-Functions"><span>Vital Rate Functions</span></a></li><li><a class="tocitem" href="#Kernel-Structure"><span>Kernel Structure</span></a></li><li><a class="tocitem" href="#Eigenanalysis"><span>Eigenanalysis</span></a></li><li><a class="tocitem" href="#Vital-Rate-Visualization"><span>Vital Rate Visualization</span></a></li><li><a class="tocitem" href="#Kernel-Visualization"><span>Kernel Visualization</span></a></li><li><a class="tocitem" href="#Stable-Distribution-and-Reproductive-Value"><span>Stable Distribution and Reproductive Value</span></a></li><li><a class="tocitem" href="#Mean-Size-at-Stable-Distribution"><span>Mean Size at Stable Distribution</span></a></li><li><a class="tocitem" href="#Age-Specific-Size-Distributions"><span>Age-Specific Size Distributions</span></a></li><li><a class="tocitem" href="#Comparison-with-Monocarp-Structure"><span>Comparison with Monocarp Structure</span></a></li><li><a class="tocitem" href="#Population-Projection"><span>Population Projection</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../03_eviction/">Eviction Correction</a></li><li><a class="tocitem" href="../04_sensitivity_elasticity/">Sensitivity and Elasticity Analysis</a></li><li><a class="tocitem" href="../05_density_dependent/">Density-Dependent IPMs</a></li><li><a class="tocitem" href="../06_stochastic/">Stochastic IPMs</a></li><li><a class="tocitem" href="../07_general_ipm/">General IPM with Seed Bank</a></li><li><a class="tocitem" href="../08_age_size/">Age x Size IPM</a></li><li><a class="tocitem" href="../09_categorical/">Categorical Composition of IPMs</a></li><li><a class="tocitem" href="../10_padrino/">PADRINO Database Integration</a></li><li><a class="tocitem" href="../11_evolving_ipm/">Evolving IPMs: Evolutionary Demography</a></li><li><a class="tocitem" href="../12_time_lag/">Time-Lagged Integral Projection Models</a></li><li><a class="tocitem" href="../13_diagnostics/">Spectral Diagnostics and Type Hierarchy</a></li><li><a class="tocitem" href="../14_kernels_and_helpers/">Kernel Composition and Helpers</a></li><li><a class="tocitem" href="../15_padrino_validation/">PADRINO Validation: Test Targets and λ Reproducibility</a></li><li><a class="tocitem" href="../16_lag_metrics/">Time-Lag Metrics: Augmentation, R0, and Generation Time</a></li><li><a class="tocitem" href="../17_ipm_mpm_bridge/">IPM ↔ MPM Discretization Bridge</a></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../api/domains/">Domains</a></li><li><a class="tocitem" href="../../api/vital_rates/">Vital Rates</a></li><li><a class="tocitem" href="../../api/kernels/">Kernels</a></li><li><a class="tocitem" href="../../api/types/">Types &amp; Traits</a></li><li><a class="tocitem" href="../../api/problems/">Problem &amp; Solution</a></li><li><a class="tocitem" href="../../api/analysis/">Analysis</a></li><li><a class="tocitem" href="../../api/time_lag/">Time-Lag Models</a></li><li><a class="tocitem" href="../../api/age_size/">Age×Size Models</a></li><li><a class="tocitem" href="../../api/categorical/">Categorical Composition</a></li><li><a class="tocitem" href="../../api/sciml/">SciML Interface</a></li><li><a class="tocitem" href="../../api/utilities/">Utilities</a></li><li><a class="tocitem" href="../../api/padrino/">PADRINO Integration</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Ungulate IPM: Soay Sheep</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Ungulate IPM: Soay Sheep</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/docs/src/tutorials/02_ungulate.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Ungulate-IPM:-Soay-Sheep"><a class="docs-heading-anchor" href="#Ungulate-IPM:-Soay-Sheep">Ungulate IPM: Soay Sheep</a><a id="Ungulate-IPM:-Soay-Sheep-1"></a><a class="docs-heading-anchor-permalink" href="#Ungulate-IPM:-Soay-Sheep" title="Permalink"></a></h1><h2 id="Overview"><a class="docs-heading-anchor" href="#Overview">Overview</a><a id="Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Overview" title="Permalink"></a></h2><p>This vignette builds a density-independent, deterministic IPM for <strong>Soay sheep</strong> (<em>Ovis aries</em>), an iteroparous ungulate from the St Kilda archipelago, Scotland. Unlike the monocarpic <em>Oenothera</em> in the previous vignette, Soay sheep can reproduce multiple times — survival appears in <em>both</em> the P and F kernels.</p><p>Key differences from the monocarp model:</p><ul><li>Survival is in both P and F kernels (reproductive individuals survive)</li><li>A 0.5 sex ratio factor in the F kernel (females-only model)</li><li>Recruit size depends on maternal size (not fixed)</li><li>Recruitment probability is size-independent</li></ul><h2 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h2><pre><code class="language-julia hljs">using IntegralProjectionModels
+using Distributions
+using LinearAlgebra
+using Plots</code></pre><h2 id="Parameters"><a class="docs-heading-anchor" href="#Parameters">Parameters</a><a id="Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Parameters" title="Permalink"></a></h2><p>Size is log body mass. Parameters are from the textbook (Ellner, Childs &amp; Rees, Chapter 2).</p><pre><code class="language-julia hljs"># Survival (logistic)
+surv_int = -9.65
+surv_z = 3.77
+
+# Growth (normal)
+grow_int = 1.41
+grow_z = 0.557
+grow_sd = 0.0799
+
+# Reproduction probability (logistic, conditional on survival)
+repr_int = -7.23
+repr_z = 2.60
+
+# Recruitment probability (logistic, intercept only — no size dependence)
+recr_int = 1.93
+
+# Recruit size (depends on maternal size)
+rcsz_int = 0.362
+rcsz_z = 0.709
+rcsz_sd = 0.159</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.159</code></pre><h2 id="Domain"><a class="docs-heading-anchor" href="#Domain">Domain</a><a id="Domain-1"></a><a class="docs-heading-anchor-permalink" href="#Domain" title="Permalink"></a></h2><pre><code class="language-julia hljs">L = 1.6
+U = 3.7
+m = 100
+
+domain = ContinuousDomain(L, U, m)
+z = meshpoints(domain)
+h = step_size(domain)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.021</code></pre><h2 id="Vital-Rate-Functions"><a class="docs-heading-anchor" href="#Vital-Rate-Functions">Vital Rate Functions</a><a id="Vital-Rate-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Vital-Rate-Functions" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Survival
+s_z(z) = 1.0 / (1.0 + exp(-(surv_int + surv_z * z)))
+
+# Growth: Normal(grow_int + grow_z * z, grow_sd)
+g_z1z(z_prime, z) = pdf(Normal(grow_int + grow_z * z, grow_sd), z_prime)
+
+# Reproduction probability (conditional on survival)
+pb_z(z) = 1.0 / (1.0 + exp(-(repr_int + repr_z * z)))
+
+# Recruitment probability (size-independent)
+pr_z() = 1.0 / (1.0 + exp(-recr_int))
+
+# Recruit size: depends on maternal size
+c_z1z(z_prime, z) = pdf(Normal(rcsz_int + rcsz_z * z, rcsz_sd), z_prime)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">c_z1z (generic function with 1 method)</code></pre><h2 id="Kernel-Structure"><a class="docs-heading-anchor" href="#Kernel-Structure">Kernel Structure</a><a id="Kernel-Structure-1"></a><a class="docs-heading-anchor-permalink" href="#Kernel-Structure" title="Permalink"></a></h2><p>For an iteroparous species, the kernel decomposition is:</p><p>$</p><p>P(z&#39;, z) = s(z) \cdot g(z&#39;|z) $</p><p>$</p><p>F(z&#39;, z) = s(z) \cdot p<em>b(z) \cdot \frac{1}{2} \cdot p</em>r \cdot c(z&#39;|z) $</p><p>Note that <strong>survival <span>$s(z)$</span> appears in F</strong> because a mother must survive to census to be counted with her offspring. The factor <span>$\frac{1}{2}$</span> accounts for the sex ratio (we model females only).</p><pre><code class="language-julia hljs"># P kernel: survival × growth
+P_z1z(z_prime, z) = s_z(z) * g_z1z(z_prime, z)
+
+# F kernel: survival × reproduction × 0.5 × recruitment × offspring size
+function F_z1z(z_prime, z)
+    return s_z(z) * pb_z(z) * 0.5 * pr_z() * c_z1z(z_prime, z)
+end
+
+P = PKernel(CustomVitalRate(s_z), CustomVitalRate(g_z1z), domain)
+F = FKernel(CustomVitalRate(F_z1z), domain)
+K = P + F</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">ComposedKernel{Tuple{PKernel{CustomVitalRate{typeof(Main.s_z), Nothing}, CustomVitalRate{typeof(Main.g_z1z), Nothing}, ContinuousDomain{Float64}}, FKernel{CustomVitalRate{typeof(Main.F_z1z), Nothing}, ContinuousDomain{Float64}}}}((PKernel{CustomVitalRate{typeof(Main.s_z), Nothing}, CustomVitalRate{typeof(Main.g_z1z), Nothing}, ContinuousDomain{Float64}}(CustomVitalRate{typeof(Main.s_z), Nothing}(Main.s_z, nothing), CustomVitalRate{typeof(Main.g_z1z), Nothing}(Main.g_z1z, nothing), ContinuousDomain{Float64}(1.6, 3.7, 100), NoCorrection), FKernel{CustomVitalRate{typeof(Main.F_z1z), Nothing}, ContinuousDomain{Float64}}(CustomVitalRate{typeof(Main.F_z1z), Nothing}(Main.F_z1z, nothing), ContinuousDomain{Float64}(1.6, 3.7, 100), NoCorrection)))</code></pre><p>Note: Because the <code>PKernel</code> constructor expects <code>survival</code> and <code>growth</code> as separate arguments (and materializes as <code>s(z) * g(z&#39;,z)</code>), we pass the separate survival and growth functions. For the F kernel, we use a <code>CustomVitalRate</code> wrapping the full fecundity function including survival.</p><h2 id="Eigenanalysis"><a class="docs-heading-anchor" href="#Eigenanalysis">Eigenanalysis</a><a id="Eigenanalysis-1"></a><a class="docs-heading-anchor-permalink" href="#Eigenanalysis" title="Permalink"></a></h2><pre><code class="language-julia hljs">n0 = uniform_population(domain)
+prob = IPMProblem(K, domain, n0, (0, 100))
+sol = solve(prob, EigenAnalysis())
+
+λ = lambda(sol)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1.0202608060555791</code></pre><pre><code class="language-julia hljs">println(&quot;Asymptotic growth rate (λ): &quot;, λ)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Asymptotic growth rate (λ): 1.0202608060555791</code></pre><h2 id="Vital-Rate-Visualization"><a class="docs-heading-anchor" href="#Vital-Rate-Visualization">Vital Rate Visualization</a><a id="Vital-Rate-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Vital-Rate-Visualization" title="Permalink"></a></h2><pre><code class="language-julia hljs">p1 = plot(z, s_z.(z), xlabel=&quot;Log body mass&quot;, ylabel=&quot;Probability&quot;,
+    title=&quot;Survival&quot;, label=false, linewidth=2)
+p2 = plot(z, pb_z.(z), xlabel=&quot;Log body mass&quot;, ylabel=&quot;Probability&quot;,
+    title=&quot;Reproduction probability&quot;, label=false, linewidth=2, color=:orange)
+p3 = plot(z, [pdf(Normal(grow_int + grow_z * zi, grow_sd), zi) for zi in z],
+    xlabel=&quot;Log body mass&quot;, ylabel=&quot;Density&quot;,
+    title=&quot;Growth (staying same size)&quot;, label=false, linewidth=2, color=:green)
+p4 = plot(z, [rcsz_int + rcsz_z * zi for zi in z],
+    xlabel=&quot;Maternal log mass&quot;, ylabel=&quot;Mean offspring log mass&quot;,
+    title=&quot;Recruit size (mean)&quot;, label=false, linewidth=2, color=:purple)
+
+plot(p1, p2, p3, p4, layout=(2, 2), size=(800, 600))</code></pre><img src="24838f69.svg" alt="Example block output"/><h2 id="Kernel-Visualization"><a class="docs-heading-anchor" href="#Kernel-Visualization">Kernel Visualization</a><a id="Kernel-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Kernel-Visualization" title="Permalink"></a></h2><pre><code class="language-julia hljs">K_matrix = materialize(K)
+P_matrix = materialize(P)
+F_matrix = materialize(F)
+
+p1 = heatmap(z, z, P_matrix, title=&quot;P kernel&quot;,
+    xlabel=&quot;Size (t)&quot;, ylabel=&quot;Size (t+1)&quot;, color=:viridis)
+p2 = heatmap(z, z, F_matrix, title=&quot;F kernel&quot;,
+    xlabel=&quot;Size (t)&quot;, ylabel=&quot;Size (t+1)&quot;, color=:viridis)
+plot(p1, p2, layout=(1, 2), size=(900, 400))</code></pre><img src="b2f0aa98.svg" alt="Example block output"/><h2 id="Stable-Distribution-and-Reproductive-Value"><a class="docs-heading-anchor" href="#Stable-Distribution-and-Reproductive-Value">Stable Distribution and Reproductive Value</a><a id="Stable-Distribution-and-Reproductive-Value-1"></a><a class="docs-heading-anchor-permalink" href="#Stable-Distribution-and-Reproductive-Value" title="Permalink"></a></h2><pre><code class="language-julia hljs">w = stable_distribution(sol)
+v = reproductive_value(sol)
+
+p1 = plot(z, w, xlabel=&quot;Log body mass&quot;, ylabel=&quot;Proportion&quot;,
+    title=&quot;Stable size distribution&quot;, label=&quot;w(z)&quot;,
+    linewidth=2, fill=(0, 0.3, :blue))
+p2 = plot(z, v, xlabel=&quot;Log body mass&quot;, ylabel=&quot;Reproductive value&quot;,
+    title=&quot;Reproductive value&quot;, label=&quot;v(z)&quot;,
+    linewidth=2, color=:red)
+plot(p1, p2, layout=(1, 2), size=(900, 400))</code></pre><img src="dbea589e.svg" alt="Example block output"/><h2 id="Mean-Size-at-Stable-Distribution"><a class="docs-heading-anchor" href="#Mean-Size-at-Stable-Distribution">Mean Size at Stable Distribution</a><a id="Mean-Size-at-Stable-Distribution-1"></a><a class="docs-heading-anchor-permalink" href="#Mean-Size-at-Stable-Distribution" title="Permalink"></a></h2><pre><code class="language-julia hljs">mean_z = sum(w .* z)
+var_z = sum(w .* z.^2) - mean_z^2</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.08001151303895959</code></pre><pre><code class="language-julia hljs">println(&quot;Mean log body mass: &quot;, round(mean_z, digits=4))
+println(&quot;SD log body mass: &quot;, round(sqrt(var_z), digits=4))
+println(&quot;Mean body mass (kg): &quot;, round(exp(mean_z), digits=2))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Mean log body mass: 2.9862
+SD log body mass: 0.2829
+Mean body mass (kg): 19.81</code></pre><h2 id="Age-Specific-Size-Distributions"><a class="docs-heading-anchor" href="#Age-Specific-Size-Distributions">Age-Specific Size Distributions</a><a id="Age-Specific-Size-Distributions-1"></a><a class="docs-heading-anchor-permalink" href="#Age-Specific-Size-Distributions" title="Permalink"></a></h2><p>Even in a simple (non-age-structured) IPM, we can recover age-specific size distributions from the P and F kernels. Newborns (age 0) have the distribution <span>$F \cdot w / \lambda$</span>, and age <span>$a+1$</span> has the distribution <span>$P \cdot n_a / \lambda$</span>.</p><pre><code class="language-julia hljs">n_ages = 8
+age_dists = Vector{Vector{Float64}}(undef, n_ages)
+
+# Age 0: offspring distribution
+age_dists[1] = F_matrix * w ./ λ
+
+# Subsequent ages: survival-growth
+for a in 2:n_ages
+    age_dists[a] = P_matrix * age_dists[a-1] ./ λ
+end
+
+# Compute mean size at each age
+mean_by_age = [sum(age_dists[a] ./ sum(age_dists[a]) .* z) for a in 1:n_ages]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">8-element Vector{Float64}:
+ 2.5579825665856255
+ 2.8742724689573462
+ 3.0193842743079995
+ 3.0954758738346055
+ 3.136673176220535
+ 3.159206073782345
+ 3.1715804937835808
+ 3.17838878972826</code></pre><pre><code class="language-julia hljs">println(&quot;Mean log body mass by age:&quot;)
+for a in 1:n_ages
+    println(&quot;  Age $(a-1): &quot;, round(mean_by_age[a], digits=3),
+            &quot; (mass = &quot;, round(exp(mean_by_age[a]), digits=2), &quot; kg)&quot;)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Mean log body mass by age:
+  Age 0: 2.558 (mass = 12.91 kg)
+  Age 1: 2.874 (mass = 17.71 kg)
+  Age 2: 3.019 (mass = 20.48 kg)
+  Age 3: 3.095 (mass = 22.1 kg)
+  Age 4: 3.137 (mass = 23.03 kg)
+  Age 5: 3.159 (mass = 23.55 kg)
+  Age 6: 3.172 (mass = 23.85 kg)
+  Age 7: 3.178 (mass = 24.01 kg)</code></pre><pre><code class="language-julia hljs">plt = plot(xlabel=&quot;Log body mass&quot;, ylabel=&quot;Density&quot;, title=&quot;Age-specific size distributions&quot;)
+for a in 1:min(n_ages, 6)
+    d = age_dists[a]
+    d_norm = d ./ sum(d)
+    plot!(plt, z, d_norm, label=&quot;Age $(a-1)&quot;, linewidth=2)
+end
+plt</code></pre><img src="8b232802.svg" alt="Example block output"/><h2 id="Comparison-with-Monocarp-Structure"><a class="docs-heading-anchor" href="#Comparison-with-Monocarp-Structure">Comparison with Monocarp Structure</a><a id="Comparison-with-Monocarp-Structure-1"></a><a class="docs-heading-anchor-permalink" href="#Comparison-with-Monocarp-Structure" title="Permalink"></a></h2><table><tr><th style="text-align: right">Feature</th><th style="text-align: right">Monocarp (<em>Oenothera</em>)</th><th style="text-align: right">Ungulate (Soay sheep)</th></tr><tr><td style="text-align: right">Life history</td><td style="text-align: right">Monocarpic (reproduce once, die)</td><td style="text-align: right">Iteroparous (repeated reproduction)</td></tr><tr><td style="text-align: right">Survival in F</td><td style="text-align: right">No (flowering = death)</td><td style="text-align: right">Yes (mothers must survive)</td></tr><tr><td style="text-align: right">Sex ratio</td><td style="text-align: right">Not modeled</td><td style="text-align: right">0.5 (females only)</td></tr><tr><td style="text-align: right">Recruit size</td><td style="text-align: right">Fixed distribution</td><td style="text-align: right">Depends on maternal size</td></tr><tr><td style="text-align: right">Recruitment probability</td><td style="text-align: right">Size-independent</td><td style="text-align: right">Size-independent</td></tr><tr><td style="text-align: right">P kernel</td><td style="text-align: right">s(z)(1-p_b(z)) \cdot g(z&#39;</td><td style="text-align: right">z)$</td></tr><tr><td style="text-align: right">F kernel</td><td style="text-align: right"><span>$p_b(z) \cdot b(z) \cdot p_r \cdot c_0(z&#39;)$</span></td><td style="text-align: right">s(z) \cdot p<em>b(z) \cdot 0.5 \cdot p</em>r \cdot c(z&#39;</td></tr></table><h2 id="Population-Projection"><a class="docs-heading-anchor" href="#Population-Projection">Population Projection</a><a id="Population-Projection-1"></a><a class="docs-heading-anchor-permalink" href="#Population-Projection" title="Permalink"></a></h2><pre><code class="language-julia hljs">sol_iter = solve(prob, DirectIteration())
+
+plot(sol_iter.lambdas,
+    xlabel=&quot;Time step&quot;,
+    ylabel=&quot;λ(t)&quot;,
+    title=&quot;Convergence to asymptotic λ&quot;,
+    label=&quot;λ(t)&quot;,
+    linewidth=2)
+hline!([λ], label=&quot;Asymptotic λ&quot;, linestyle=:dash, color=:red)</code></pre><img src="0379d29b.svg" alt="Example block output"/><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>In this vignette we:</p><ol><li>Built a density-independent, deterministic IPM for Soay sheep</li><li>Highlighted the key structural difference from monocarpic models: survival in the F kernel</li><li>Computed <span>$\lambda$</span>, stable distribution, and reproductive value</li><li>Recovered age-specific size distributions from the simple IPM</li><li>Compared the ungulate and monocarp model structures</li></ol></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../01_introduction/">« Introduction to Integral Projection Models</a><a class="docs-footer-nextpage" href="../03_eviction/">Eviction Correction »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 8 June 2026 23:57">Monday 8 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

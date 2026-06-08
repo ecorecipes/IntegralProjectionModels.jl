@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Eviction Correction · IntegralProjectionModels.jl</title><meta name="title" content="Eviction Correction · IntegralProjectionModels.jl"/><meta property="og:title" content="Eviction Correction · IntegralProjectionModels.jl"/><meta property="twitter:title" content="Eviction Correction · IntegralProjectionModels.jl"/><meta name="description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="twitter:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/03_eviction/"/><meta property="twitter:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/03_eviction/"/><link rel="canonical" href="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/03_eviction/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">IntegralProjectionModels.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../01_introduction/">Introduction to Integral Projection Models</a></li><li><a class="tocitem" href="../02_ungulate/">Ungulate IPM: Soay Sheep</a></li><li class="is-active"><a class="tocitem" href>Eviction Correction</a><ul class="internal"><li><a class="tocitem" href="#Overview"><span>Overview</span></a></li><li><a class="tocitem" href="#Setup"><span>Setup</span></a></li><li><a class="tocitem" href="#Model-Parameters"><span>Model Parameters</span></a></li><li><a class="tocitem" href="#What-Is-Eviction?"><span>What Is Eviction?</span></a></li><li><a class="tocitem" href="#Diagnosing-Eviction:-Column-Sums"><span>Diagnosing Eviction: Column Sums</span></a></li><li><a class="tocitem" href="#Correction-Method-1:-Truncated-Distributions"><span>Correction Method 1: Truncated Distributions</span></a></li><li><a class="tocitem" href="#Correction-Method-2:-Discrete-Extrema"><span>Correction Method 2: Discrete Extrema</span></a></li><li><a class="tocitem" href="#Comparing-Column-Sums"><span>Comparing Column Sums</span></a></li><li><a class="tocitem" href="#Effect-on-Lambda"><span>Effect on Lambda</span></a></li><li><a class="tocitem" href="#Effect-of-Domain-Width"><span>Effect of Domain Width</span></a></li><li><a class="tocitem" href="#When-Does-Eviction-Matter?"><span>When Does Eviction Matter?</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../04_sensitivity_elasticity/">Sensitivity and Elasticity Analysis</a></li><li><a class="tocitem" href="../05_density_dependent/">Density-Dependent IPMs</a></li><li><a class="tocitem" href="../06_stochastic/">Stochastic IPMs</a></li><li><a class="tocitem" href="../07_general_ipm/">General IPM with Seed Bank</a></li><li><a class="tocitem" href="../08_age_size/">Age x Size IPM</a></li><li><a class="tocitem" href="../09_categorical/">Categorical Composition of IPMs</a></li><li><a class="tocitem" href="../10_padrino/">PADRINO Database Integration</a></li><li><a class="tocitem" href="../11_evolving_ipm/">Evolving IPMs: Evolutionary Demography</a></li><li><a class="tocitem" href="../12_time_lag/">Time-Lagged Integral Projection Models</a></li><li><a class="tocitem" href="../13_diagnostics/">Spectral Diagnostics and Type Hierarchy</a></li><li><a class="tocitem" href="../14_kernels_and_helpers/">Kernel Composition and Helpers</a></li><li><a class="tocitem" href="../15_padrino_validation/">PADRINO Validation: Test Targets and λ Reproducibility</a></li><li><a class="tocitem" href="../16_lag_metrics/">Time-Lag Metrics: Augmentation, R0, and Generation Time</a></li><li><a class="tocitem" href="../17_ipm_mpm_bridge/">IPM ↔ MPM Discretization Bridge</a></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../api/domains/">Domains</a></li><li><a class="tocitem" href="../../api/vital_rates/">Vital Rates</a></li><li><a class="tocitem" href="../../api/kernels/">Kernels</a></li><li><a class="tocitem" href="../../api/types/">Types &amp; Traits</a></li><li><a class="tocitem" href="../../api/problems/">Problem &amp; Solution</a></li><li><a class="tocitem" href="../../api/analysis/">Analysis</a></li><li><a class="tocitem" href="../../api/time_lag/">Time-Lag Models</a></li><li><a class="tocitem" href="../../api/age_size/">Age×Size Models</a></li><li><a class="tocitem" href="../../api/categorical/">Categorical Composition</a></li><li><a class="tocitem" href="../../api/sciml/">SciML Interface</a></li><li><a class="tocitem" href="../../api/utilities/">Utilities</a></li><li><a class="tocitem" href="../../api/padrino/">PADRINO Integration</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Eviction Correction</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Eviction Correction</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/docs/src/tutorials/03_eviction.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Eviction-Correction"><a class="docs-heading-anchor" href="#Eviction-Correction">Eviction Correction</a><a id="Eviction-Correction-1"></a><a class="docs-heading-anchor-permalink" href="#Eviction-Correction" title="Permalink"></a></h1><h2 id="Overview"><a class="docs-heading-anchor" href="#Overview">Overview</a><a id="Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Overview" title="Permalink"></a></h2><p><strong>Eviction</strong> occurs when the growth distribution of an individual extends beyond the domain boundaries <span>$[L, U]$</span>, causing probability mass to be lost. This leads to underestimation of survival and can bias <span>$\lambda$</span> and other demographic quantities.</p><p>This vignette demonstrates:</p><ol><li>How to diagnose eviction by examining column sums of the P kernel</li><li>Three correction methods: <code>NoCorrection</code>, <code>TruncatedDistributions</code>, <code>DiscreteExtrema</code></li><li>The effect of correction on <span>$\lambda$</span></li></ol><p>We use the monocarp (<em>Oenothera</em>) model from the introductory vignette.</p><h2 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h2><pre><code class="language-julia hljs">using IntegralProjectionModels
+using Distributions
+using LinearAlgebra
+using Plots</code></pre><h2 id="Model-Parameters"><a class="docs-heading-anchor" href="#Model-Parameters">Model Parameters</a><a id="Model-Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Model-Parameters" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Monocarp parameters (Kachi &amp; Hirose / Rees &amp; Rose)
+surv_int = -0.65;  surv_z = 0.75
+flow_int = -18.0;  flow_z = 6.9
+grow_int = 0.96;   grow_z = 0.59;  grow_sd = 0.67
+rcsz_int = -0.08;  rcsz_sd = 0.76
+seed_int = 1.0;    seed_z = 2.2
+p_r = 0.007
+
+# Vital rates
+s_z(z) = 1.0 / (1.0 + exp(-(surv_int + surv_z * z)))
+p_bz(z) = 1.0 / (1.0 + exp(-(flow_int + flow_z * z)))
+b_z(z) = exp(seed_int + seed_z * z)
+c_0z1(z_prime) = pdf(Normal(rcsz_int, rcsz_sd), z_prime)
+
+# Effective survival for P kernel: survive AND don&#39;t flower
+P_survival(z) = s_z(z) * (1.0 - p_bz(z))
+
+# Growth as a typed object (needed for TruncatedDistributions eviction)
+growth = NormalGrowth(grow_int, grow_z, grow_sd)
+
+# Fecundity function
+F_z1z(z_prime, z) = p_bz(z) * b_z(z) * p_r * c_0z1(z_prime)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">F_z1z (generic function with 1 method)</code></pre><h2 id="What-Is-Eviction?"><a class="docs-heading-anchor" href="#What-Is-Eviction?">What Is Eviction?</a><a id="What-Is-Eviction?-1"></a><a class="docs-heading-anchor-permalink" href="#What-Is-Eviction?" title="Permalink"></a></h2><p>Consider an individual at size <span>$z$</span> near the upper boundary. Its expected size next year is <span>$\mu = 0.96 + 0.59z$</span>. If <span>$z$</span> is large, a substantial fraction of the growth distribution <span>$G(z&#39;|z) = N(\mu, 0.67)$</span> lies above the upper limit <span>$U$</span>.</p><pre><code class="language-julia hljs">domain = ContinuousDomain(-2.65, 4.5, 250)
+z = meshpoints(domain)
+
+# Fraction of growth distribution above U for different sizes
+z_examples = [-2.0, 0.5, 2.0, 3.5]
+z_dense = range(-3.0, 5.5, length=500)
+
+plt = plot(xlabel=&quot;Size at t+1 (z&#39;)&quot;, ylabel=&quot;Density&quot;,
+    title=&quot;Growth distributions for different starting sizes&quot;)
+for zi in z_examples
+    mu = grow_int + grow_z * zi
+    d = Normal(mu, grow_sd)
+    frac_lost = 1.0 - cdf(d, 4.5)
+    plot!(plt, z_dense, pdf.(d, z_dense),
+        label=&quot;z=$(zi), lost=$(round(frac_lost*100, digits=1))%&quot;,
+        linewidth=2)
+end
+vline!(plt, [-2.65, 4.5], label=&quot;Domain bounds&quot;, linestyle=:dash, color=:black)
+plt</code></pre><img src="93504410.svg" alt="Example block output"/><h2 id="Diagnosing-Eviction:-Column-Sums"><a class="docs-heading-anchor" href="#Diagnosing-Eviction:-Column-Sums">Diagnosing Eviction: Column Sums</a><a id="Diagnosing-Eviction:-Column-Sums-1"></a><a class="docs-heading-anchor-permalink" href="#Diagnosing-Eviction:-Column-Sums" title="Permalink"></a></h2><p>For the P kernel, each column <span>$j$</span> should integrate (approximately) to the effective survival probability <span>$s(z_j)(1 - p_b(z_j))$</span>. If eviction is present, column sums will fall below the true survival probability.</p><pre><code class="language-julia hljs">h = step_size(domain)
+
+# Build P kernel without correction
+# Using NormalGrowth for all cases so TruncatedDistributions will work
+P_nocorr = PKernel(CustomVitalRate(P_survival), growth, domain;
+    eviction=NoCorrection)
+P_mat_nocorr = materialize(P_nocorr)
+
+# Column sums should equal effective survival
+col_sums_nocorr = vec(sum(P_mat_nocorr, dims=1))
+true_survival = P_survival.(z)
+
+plot(z, [col_sums_nocorr true_survival],
+    xlabel=&quot;Size z&quot;, ylabel=&quot;Column sum / Survival&quot;,
+    title=&quot;P kernel column sums vs true survival&quot;,
+    label=[&quot;Column sum (no correction)&quot; &quot;True s(z)×(1-p_b(z))&quot;],
+    linewidth=2)</code></pre><img src="37e2a678.svg" alt="Example block output"/><pre><code class="language-julia hljs"># Deficit: how much probability mass is lost
+deficit = true_survival .- col_sums_nocorr
+
+plot(z, deficit,
+    xlabel=&quot;Size z&quot;, ylabel=&quot;Probability lost&quot;,
+    title=&quot;Eviction deficit by size&quot;,
+    label=&quot;Lost mass&quot;,
+    linewidth=2, color=:red)</code></pre><img src="31ebaa48.svg" alt="Example block output"/><p>The deficit is largest for individuals at the upper end of the size range, where the growth distribution extends beyond <span>$U = 4.5$</span>.</p><h2 id="Correction-Method-1:-Truncated-Distributions"><a class="docs-heading-anchor" href="#Correction-Method-1:-Truncated-Distributions">Correction Method 1: Truncated Distributions</a><a id="Correction-Method-1:-Truncated-Distributions-1"></a><a class="docs-heading-anchor-permalink" href="#Correction-Method-1:-Truncated-Distributions" title="Permalink"></a></h2><p>The <code>TruncatedDistributions</code> method divides the growth density by the CDF within the domain bounds:</p><p>$</p><p>G_{\text{trunc}}(z&#39;|z) = \frac{G(z&#39;|z)}{\Phi(U|\mu, \sigma) - \Phi(L|\mu, \sigma)} $</p><p>This ensures the growth distribution integrates to 1 over <span>$[L, U]$</span>. Note that <code>TruncatedDistributions</code> requires a typed growth rate (<code>NormalGrowth</code> or <code>LogNormalGrowth</code>) rather than a <code>CustomVitalRate</code>, so that the package can access the distribution parameters for the CDF calculation.</p><pre><code class="language-julia hljs">P_trunc = PKernel(CustomVitalRate(P_survival), growth, domain;
+    eviction=TruncatedDistributions)
+P_mat_trunc = materialize(P_trunc)
+
+col_sums_trunc = vec(sum(P_mat_trunc, dims=1))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">250-element Vector{Float64}:
+ 0.06743503690126253
+ 0.06879655177369087
+ 0.07018348709857274
+ 0.07159623342393001
+ 0.07303518387226796
+ 0.07450073400437329
+ 0.07599328167535987
+ 0.07751322688276364
+ 0.07906097160649128
+ 0.08063691964042831
+ ⋮
+ 1.0667361596916802e-5
+ 8.770553267901817e-6
+ 7.210801492488797e-6
+ 5.928255806078243e-6
+ 4.87368479976204e-6
+ 4.006593687353247e-6
+ 3.2936752359799133e-6
+ 2.707535095116562e-6
+ 2.2256429685929166e-6</code></pre><h2 id="Correction-Method-2:-Discrete-Extrema"><a class="docs-heading-anchor" href="#Correction-Method-2:-Discrete-Extrema">Correction Method 2: Discrete Extrema</a><a id="Correction-Method-2:-Discrete-Extrema-1"></a><a class="docs-heading-anchor-permalink" href="#Correction-Method-2:-Discrete-Extrema" title="Permalink"></a></h2><p>The <code>DiscreteExtrema</code> method redistributes lost probability mass to the boundary mesh points. For each column, if the column sum is less than expected, the deficit is added to the first row (if <span>$z$</span> is in the lower half) or the last row (if <span>$z$</span> is in the upper half).</p><pre><code class="language-julia hljs">P_extrema = PKernel(CustomVitalRate(P_survival), growth, domain;
+    eviction=DiscreteExtrema)
+P_mat_extrema = materialize(P_extrema)
+
+col_sums_extrema = vec(sum(P_mat_extrema, dims=1))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">250-element Vector{Float64}:
+ 0.9999999999999999
+ 1.0000000000000002
+ 1.0000000000000002
+ 0.9999999999999999
+ 1.0
+ 1.0000000000000002
+ 1.0
+ 1.0000000000000002
+ 1.0
+ 0.9999999999999999
+ ⋮
+ 0.9999999999999999
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 0.9999999999999999
+ 1.0</code></pre><h2 id="Comparing-Column-Sums"><a class="docs-heading-anchor" href="#Comparing-Column-Sums">Comparing Column Sums</a><a id="Comparing-Column-Sums-1"></a><a class="docs-heading-anchor-permalink" href="#Comparing-Column-Sums" title="Permalink"></a></h2><pre><code class="language-julia hljs">plot(z, [col_sums_nocorr col_sums_trunc col_sums_extrema true_survival],
+    xlabel=&quot;Size z&quot;,
+    ylabel=&quot;Column sum&quot;,
+    title=&quot;P kernel column sums under different corrections&quot;,
+    label=[&quot;No correction&quot; &quot;Truncated distributions&quot; &quot;Discrete extrema&quot; &quot;True survival&quot;],
+    linewidth=[2 2 2 1],
+    linestyle=[:solid :solid :solid :dash])</code></pre><img src="e908fe64.svg" alt="Example block output"/><pre><code class="language-julia hljs"># Maximum absolute error in column sums
+err_nocorr = maximum(abs.(col_sums_nocorr .- true_survival))
+err_trunc = maximum(abs.(col_sums_trunc .- true_survival))
+err_extrema = maximum(abs.(col_sums_extrema .- true_survival))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.999997774397689</code></pre><pre><code class="language-julia hljs">println(&quot;Max column sum error:&quot;)
+println(&quot;  No correction:           &quot;, round(err_nocorr, sigdigits=4))
+println(&quot;  Truncated distributions: &quot;, round(err_trunc, sigdigits=4))
+println(&quot;  Discrete extrema:        &quot;, round(err_extrema, sigdigits=4))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Max column sum error:
+  No correction:           0.0005585
+  Truncated distributions: 4.271e-7
+  Discrete extrema:        1.0</code></pre><h2 id="Effect-on-Lambda"><a class="docs-heading-anchor" href="#Effect-on-Lambda">Effect on Lambda</a><a id="Effect-on-Lambda-1"></a><a class="docs-heading-anchor-permalink" href="#Effect-on-Lambda" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Build full kernels with each correction
+F_kern = FKernel(CustomVitalRate(F_z1z), domain)
+
+K_nocorr = P_mat_nocorr + materialize(F_kern)
+K_trunc = P_mat_trunc + materialize(F_kern)
+K_extrema = P_mat_extrema + materialize(F_kern)
+
+λ_nocorr = real(eigen(K_nocorr).values[argmax(real.(eigen(K_nocorr).values))])
+λ_trunc = real(eigen(K_trunc).values[argmax(real.(eigen(K_trunc).values))])
+λ_extrema = real(eigen(K_extrema).values[argmax(real.(eigen(K_extrema).values))])</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">5.169761984308968</code></pre><pre><code class="language-julia hljs">println(&quot;Lambda values:&quot;)
+println(&quot;  No correction:           &quot;, round(λ_nocorr, digits=6))
+println(&quot;  Truncated distributions: &quot;, round(λ_trunc, digits=6))
+println(&quot;  Discrete extrema:        &quot;, round(λ_extrema, digits=6))
+println()
+println(&quot;Difference from no correction:&quot;)
+println(&quot;  Truncated distributions: &quot;, round(λ_trunc - λ_nocorr, sigdigits=4))
+println(&quot;  Discrete extrema:        &quot;, round(λ_extrema - λ_nocorr, sigdigits=4))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Lambda values:
+  No correction:           1.059307
+  Truncated distributions: 1.059508
+  Discrete extrema:        5.169762
+
+Difference from no correction:
+  Truncated distributions: 0.0002016
+  Discrete extrema:        4.11</code></pre><h2 id="Effect-of-Domain-Width"><a class="docs-heading-anchor" href="#Effect-of-Domain-Width">Effect of Domain Width</a><a id="Effect-of-Domain-Width-1"></a><a class="docs-heading-anchor-permalink" href="#Effect-of-Domain-Width" title="Permalink"></a></h2><p>A wider domain reduces eviction but increases computation. Let us examine how <span>$\lambda$</span> changes with the upper limit.</p><pre><code class="language-julia hljs">U_vals = range(3.5, 6.0, length=25)
+λ_by_U_nocorr = Float64[]
+λ_by_U_trunc = Float64[]
+
+for U_test in U_vals
+    dom_test = ContinuousDomain(-2.65, U_test, 250)
+
+    # No correction
+    P_test = PKernel(CustomVitalRate(P_survival), growth, dom_test;
+        eviction=NoCorrection)
+    F_test = FKernel(CustomVitalRate(F_z1z), dom_test)
+    K_test = materialize(P_test) + materialize(F_test)
+    e = eigen(K_test)
+    push!(λ_by_U_nocorr, real(e.values[argmax(real.(e.values))]))
+
+    # Truncated
+    P_test_t = PKernel(CustomVitalRate(P_survival), growth, dom_test;
+        eviction=TruncatedDistributions)
+    K_test_t = materialize(P_test_t) + materialize(F_test)
+    e_t = eigen(K_test_t)
+    push!(λ_by_U_trunc, real(e_t.values[argmax(real.(e_t.values))]))
+end
+
+plot(U_vals, [λ_by_U_nocorr λ_by_U_trunc],
+    xlabel=&quot;Upper domain limit (U)&quot;,
+    ylabel=&quot;λ&quot;,
+    title=&quot;Lambda vs domain upper limit&quot;,
+    label=[&quot;No correction&quot; &quot;Truncated distributions&quot;],
+    linewidth=2)</code></pre><img src="11fa2f3c.svg" alt="Example block output"/><p>With eviction correction, <span>$\lambda$</span> is stable across a wide range of upper limits. Without correction, <span>$\lambda$</span> converges only as the domain becomes wide enough to capture essentially all of the growth distribution.</p><h2 id="When-Does-Eviction-Matter?"><a class="docs-heading-anchor" href="#When-Does-Eviction-Matter?">When Does Eviction Matter?</a><a id="When-Does-Eviction-Matter?-1"></a><a class="docs-heading-anchor-permalink" href="#When-Does-Eviction-Matter?" title="Permalink"></a></h2><p>Eviction is most problematic when:</p><ul><li><strong>Growth variance is large</strong> relative to the domain width</li><li><strong>Domain bounds are tight</strong> (close to the data range)</li><li><strong>Individuals near the boundaries</strong> have high survival</li></ul><p>For this monocarp model, the growth standard deviation (<span>$\sigma = 0.67$</span>) is substantial relative to the domain width (<span>$U - L = 7.15$</span>), so eviction is noticeable but modest. For species with narrower size ranges or larger growth variance, the effect can be much larger.</p><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><table><tr><th style="text-align: right">Correction Method</th><th style="text-align: right">Description</th><th style="text-align: right">Column Sums</th><th style="text-align: right">Lambda Effect</th></tr><tr><td style="text-align: right"><code>NoCorrection</code></td><td style="text-align: right">No adjustment</td><td style="text-align: right">Below true survival near boundaries</td><td style="text-align: right">Slightly biased low</td></tr><tr><td style="text-align: right"><code>TruncatedDistributions</code></td><td style="text-align: right">Divide by CDF within bounds</td><td style="text-align: right">Match true survival</td><td style="text-align: right">Corrected</td></tr><tr><td style="text-align: right"><code>DiscreteExtrema</code></td><td style="text-align: right">Redistribute lost mass to boundaries</td><td style="text-align: right">Match true survival</td><td style="text-align: right">Corrected</td></tr></table><p>Both correction methods restore the column sums to match the true survival probability. <code>TruncatedDistributions</code> rescales the growth distribution, while <code>DiscreteExtrema</code> places lost mass at the domain edges. For most applications, <code>TruncatedDistributions</code> is preferred as it maintains the shape of the growth distribution.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../02_ungulate/">« Ungulate IPM: Soay Sheep</a><a class="docs-footer-nextpage" href="../04_sensitivity_elasticity/">Sensitivity and Elasticity Analysis »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 8 June 2026 23:57">Monday 8 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

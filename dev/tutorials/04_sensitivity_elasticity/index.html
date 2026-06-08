@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Sensitivity and Elasticity Analysis · IntegralProjectionModels.jl</title><meta name="title" content="Sensitivity and Elasticity Analysis · IntegralProjectionModels.jl"/><meta property="og:title" content="Sensitivity and Elasticity Analysis · IntegralProjectionModels.jl"/><meta property="twitter:title" content="Sensitivity and Elasticity Analysis · IntegralProjectionModels.jl"/><meta name="description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="twitter:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/04_sensitivity_elasticity/"/><meta property="twitter:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/04_sensitivity_elasticity/"/><link rel="canonical" href="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/04_sensitivity_elasticity/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">IntegralProjectionModels.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../01_introduction/">Introduction to Integral Projection Models</a></li><li><a class="tocitem" href="../02_ungulate/">Ungulate IPM: Soay Sheep</a></li><li><a class="tocitem" href="../03_eviction/">Eviction Correction</a></li><li class="is-active"><a class="tocitem" href>Sensitivity and Elasticity Analysis</a><ul class="internal"><li><a class="tocitem" href="#Overview"><span>Overview</span></a></li><li><a class="tocitem" href="#Setup"><span>Setup</span></a></li><li><a class="tocitem" href="#Soay-Sheep-Model"><span>Soay Sheep Model</span></a></li><li><a class="tocitem" href="#Sensitivity-Matrix"><span>Sensitivity Matrix</span></a></li><li><a class="tocitem" href="#Elasticity-Matrix"><span>Elasticity Matrix</span></a></li><li><a class="tocitem" href="#Decomposing-P-and-F-Contributions"><span>Decomposing P and F Contributions</span></a></li><li><a class="tocitem" href="#Biological-Interpretation"><span>Biological Interpretation</span></a></li><li><a class="tocitem" href="#Sensitivity-of-Lambda-to-Vital-Rate-Parameters"><span>Sensitivity of Lambda to Vital Rate Parameters</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../05_density_dependent/">Density-Dependent IPMs</a></li><li><a class="tocitem" href="../06_stochastic/">Stochastic IPMs</a></li><li><a class="tocitem" href="../07_general_ipm/">General IPM with Seed Bank</a></li><li><a class="tocitem" href="../08_age_size/">Age x Size IPM</a></li><li><a class="tocitem" href="../09_categorical/">Categorical Composition of IPMs</a></li><li><a class="tocitem" href="../10_padrino/">PADRINO Database Integration</a></li><li><a class="tocitem" href="../11_evolving_ipm/">Evolving IPMs: Evolutionary Demography</a></li><li><a class="tocitem" href="../12_time_lag/">Time-Lagged Integral Projection Models</a></li><li><a class="tocitem" href="../13_diagnostics/">Spectral Diagnostics and Type Hierarchy</a></li><li><a class="tocitem" href="../14_kernels_and_helpers/">Kernel Composition and Helpers</a></li><li><a class="tocitem" href="../15_padrino_validation/">PADRINO Validation: Test Targets and λ Reproducibility</a></li><li><a class="tocitem" href="../16_lag_metrics/">Time-Lag Metrics: Augmentation, R0, and Generation Time</a></li><li><a class="tocitem" href="../17_ipm_mpm_bridge/">IPM ↔ MPM Discretization Bridge</a></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../api/domains/">Domains</a></li><li><a class="tocitem" href="../../api/vital_rates/">Vital Rates</a></li><li><a class="tocitem" href="../../api/kernels/">Kernels</a></li><li><a class="tocitem" href="../../api/types/">Types &amp; Traits</a></li><li><a class="tocitem" href="../../api/problems/">Problem &amp; Solution</a></li><li><a class="tocitem" href="../../api/analysis/">Analysis</a></li><li><a class="tocitem" href="../../api/time_lag/">Time-Lag Models</a></li><li><a class="tocitem" href="../../api/age_size/">Age×Size Models</a></li><li><a class="tocitem" href="../../api/categorical/">Categorical Composition</a></li><li><a class="tocitem" href="../../api/sciml/">SciML Interface</a></li><li><a class="tocitem" href="../../api/utilities/">Utilities</a></li><li><a class="tocitem" href="../../api/padrino/">PADRINO Integration</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Sensitivity and Elasticity Analysis</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Sensitivity and Elasticity Analysis</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/docs/src/tutorials/04_sensitivity_elasticity.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Sensitivity-and-Elasticity-Analysis"><a class="docs-heading-anchor" href="#Sensitivity-and-Elasticity-Analysis">Sensitivity and Elasticity Analysis</a><a id="Sensitivity-and-Elasticity-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Sensitivity-and-Elasticity-Analysis" title="Permalink"></a></h1><h2 id="Overview"><a class="docs-heading-anchor" href="#Overview">Overview</a><a id="Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Overview" title="Permalink"></a></h2><p><strong>Perturbation analysis</strong> quantifies how the population growth rate <span>$\lambda$</span> responds to changes in the projection kernel. Two key measures are:</p><ul><li><strong>Sensitivity</strong>: <span>$\frac{\partial \lambda}{\partial K(z&#39;, z)} = \frac{v(z&#39;) \, w(z)}{\langle v, w \rangle}$</span> — the absolute change in <span>$\lambda$</span> for a small additive change to <span>$K(z&#39;, z)$</span></li><li><strong>Elasticity</strong>: <span>$e(z&#39;, z) = \frac{K(z&#39;, z)}{\lambda} \cdot \frac{\partial \lambda}{\partial K(z&#39;, z)}$</span> — the proportional change in <span>$\lambda$</span> for a proportional change to <span>$K(z&#39;, z)$</span></li></ul><p>A fundamental property is that the <strong>elasticities sum to 1</strong>, and the elasticities of the P and F kernels sum to the respective contributions to <span>$\lambda$</span>.</p><p>This vignette uses the Soay sheep (ungulate) model from the previous vignette.</p><h2 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h2><pre><code class="language-julia hljs">using IntegralProjectionModels
+using Distributions
+using LinearAlgebra
+using Plots</code></pre><h2 id="Soay-Sheep-Model"><a class="docs-heading-anchor" href="#Soay-Sheep-Model">Soay Sheep Model</a><a id="Soay-Sheep-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Soay-Sheep-Model" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Parameters
+surv_int = -9.65;  surv_z = 3.77
+grow_int = 1.41;   grow_z = 0.557;  grow_sd = 0.0799
+repr_int = -7.23;  repr_z = 2.60
+recr_int = 1.93
+rcsz_int = 0.362;  rcsz_z = 0.709;  rcsz_sd = 0.159
+
+# Domain
+domain = ContinuousDomain(1.6, 3.7, 100)
+z = meshpoints(domain)
+h = step_size(domain)
+
+# Vital rates
+s_z(z) = 1.0 / (1.0 + exp(-(surv_int + surv_z * z)))
+g_z1z(z_prime, z) = pdf(Normal(grow_int + grow_z * z, grow_sd), z_prime)
+pb_z(z) = 1.0 / (1.0 + exp(-(repr_int + repr_z * z)))
+pr_z() = 1.0 / (1.0 + exp(-recr_int))
+c_z1z(z_prime, z) = pdf(Normal(rcsz_int + rcsz_z * z, rcsz_sd), z_prime)
+
+function F_z1z(z_prime, z)
+    return s_z(z) * pb_z(z) * 0.5 * pr_z() * c_z1z(z_prime, z)
+end
+
+# Kernels
+P = PKernel(CustomVitalRate(s_z), CustomVitalRate(g_z1z), domain)
+F = FKernel(CustomVitalRate(F_z1z), domain)
+K = P + F
+
+# Solve
+n0 = uniform_population(domain)
+prob = IPMProblem(K, domain, n0, (0, 100))
+sol = solve(prob, EigenAnalysis())
+λ = lambda(sol)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1.0202608060555791</code></pre><pre><code class="language-julia hljs">println(&quot;λ = &quot;, round(λ, digits=6))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">λ = 1.020261</code></pre><h2 id="Sensitivity-Matrix"><a class="docs-heading-anchor" href="#Sensitivity-Matrix">Sensitivity Matrix</a><a id="Sensitivity-Matrix-1"></a><a class="docs-heading-anchor-permalink" href="#Sensitivity-Matrix" title="Permalink"></a></h2><p>The sensitivity matrix <span>$S(z&#39;, z)$</span> gives the absolute effect of a small additive change to <span>$K(z&#39;, z)$</span> on <span>$\lambda$</span>:</p><p>$</p><p>S(z&#39;, z) = \frac{v(z&#39;) \, w(z)}{\langle v, w \rangle} $</p><p>where <span>$w$</span> is the stable distribution (right eigenvector) and <span>$v$</span> is the reproductive value (left eigenvector).</p><pre><code class="language-julia hljs">S = sensitivity(sol)
+
+heatmap(z, z, S,
+    xlabel=&quot;Size at time t&quot;,
+    ylabel=&quot;Size at time t+1&quot;,
+    title=&quot;Sensitivity matrix S(z&#39;, z)&quot;,
+    color=:viridis)</code></pre><img src="35318412.svg" alt="Example block output"/><pre><code class="language-julia hljs"># Sensitivity peaks where reproductive value × stable distribution is largest
+v = reproductive_value(sol)
+w = stable_distribution(sol)
+
+p1 = plot(z, w, xlabel=&quot;Size&quot;, ylabel=&quot;w(z)&quot;,
+    title=&quot;Stable distribution&quot;, label=false, linewidth=2)
+p2 = plot(z, v, xlabel=&quot;Size&quot;, ylabel=&quot;v(z)&quot;,
+    title=&quot;Reproductive value&quot;, label=false, linewidth=2, color=:red)
+plot(p1, p2, layout=(1, 2), size=(800, 350))</code></pre><img src="03d8a7b9.svg" alt="Example block output"/><h2 id="Elasticity-Matrix"><a class="docs-heading-anchor" href="#Elasticity-Matrix">Elasticity Matrix</a><a id="Elasticity-Matrix-1"></a><a class="docs-heading-anchor-permalink" href="#Elasticity-Matrix" title="Permalink"></a></h2><p>The elasticity matrix gives the <em>proportional</em> sensitivity — the proportional change in <span>$\lambda$</span> for a proportional change in <span>$K(z&#39;, z)$</span>:</p><p>$</p><p>e(z&#39;, z) = \frac{K(z&#39;, z)}{\lambda} \cdot S(z&#39;, z) $</p><pre><code class="language-julia hljs">E = elasticity(sol)
+
+heatmap(z, z, E,
+    xlabel=&quot;Size at time t&quot;,
+    ylabel=&quot;Size at time t+1&quot;,
+    title=&quot;Elasticity matrix e(z&#39;, z)&quot;,
+    color=:viridis)</code></pre><img src="70ccfbd0.svg" alt="Example block output"/><h3 id="Elasticities-Sum-to-1"><a class="docs-heading-anchor" href="#Elasticities-Sum-to-1">Elasticities Sum to 1</a><a id="Elasticities-Sum-to-1-1"></a><a class="docs-heading-anchor-permalink" href="#Elasticities-Sum-to-1" title="Permalink"></a></h3><p>A key property of the elasticity matrix is that its elements sum to 1 (when scaled by <span>$h^2$</span> for the double integral over the continuous domain):</p><p>$</p><p>\int<em>L^U \int</em>L^U e(z&#39;, z) \, dz&#39; \, dz = 1 $</p><p>In the discretized version, the sum of all matrix elements equals 1:</p><pre><code class="language-julia hljs">println(&quot;Sum of elasticities: &quot;, round(sum(E), digits=10))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Sum of elasticities: 1.0</code></pre><h2 id="Decomposing-P-and-F-Contributions"><a class="docs-heading-anchor" href="#Decomposing-P-and-F-Contributions">Decomposing P and F Contributions</a><a id="Decomposing-P-and-F-Contributions-1"></a><a class="docs-heading-anchor-permalink" href="#Decomposing-P-and-F-Contributions" title="Permalink"></a></h2><p>We can compute the elasticity contributions from the P (survival-growth) and F (fecundity) kernels separately.</p><pre><code class="language-julia hljs">P_matrix = materialize(P)
+F_matrix = materialize(F)
+K_matrix = materialize(K)
+
+# Elasticity of P: (P[i,j] / λ) * S[i,j]
+E_P = (P_matrix ./ λ) .* S
+E_F = (F_matrix ./ λ) .* S
+
+e_P = sum(E_P)
+e_F = sum(E_F)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.0925699810757838</code></pre><pre><code class="language-julia hljs">println(&quot;Elasticity contribution of P (survival-growth): &quot;, round(e_P, digits=6))
+println(&quot;Elasticity contribution of F (fecundity):       &quot;, round(e_F, digits=6))
+println(&quot;Sum:                                            &quot;, round(e_P + e_F, digits=6))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Elasticity contribution of P (survival-growth): 0.90743
+Elasticity contribution of F (fecundity):       0.09257
+Sum:                                            1.0</code></pre><pre><code class="language-julia hljs">p1 = heatmap(z, z, E_P, title=&quot;Elasticity of P&quot;,
+    xlabel=&quot;Size (t)&quot;, ylabel=&quot;Size (t+1)&quot;, color=:viridis)
+p2 = heatmap(z, z, E_F, title=&quot;Elasticity of F&quot;,
+    xlabel=&quot;Size (t)&quot;, ylabel=&quot;Size (t+1)&quot;, color=:viridis)
+plot(p1, p2, layout=(1, 2), size=(900, 400))</code></pre><img src="ebad3e84.svg" alt="Example block output"/><h2 id="Biological-Interpretation"><a class="docs-heading-anchor" href="#Biological-Interpretation">Biological Interpretation</a><a id="Biological-Interpretation-1"></a><a class="docs-heading-anchor-permalink" href="#Biological-Interpretation" title="Permalink"></a></h2><p>For Soay sheep, most of the elasticity is in the P kernel (survival-growth), meaning <span>$\lambda$</span> is more sensitive to proportional changes in survival and growth than to proportional changes in fecundity. This is typical for long-lived iteroparous species.</p><h3 id="Size-Specific-Elasticity"><a class="docs-heading-anchor" href="#Size-Specific-Elasticity">Size-Specific Elasticity</a><a id="Size-Specific-Elasticity-1"></a><a class="docs-heading-anchor-permalink" href="#Size-Specific-Elasticity" title="Permalink"></a></h3><p>We can marginalize the elasticity matrix to see which sizes contribute most:</p><pre><code class="language-julia hljs"># Marginal elasticity over z&#39; (contribution of size z at time t)
+e_by_size = vec(sum(E, dims=1))
+
+# Marginal elasticity over z (contribution of size z&#39; at time t+1)
+e_by_size_prime = vec(sum(E, dims=2))
+
+p1 = plot(z, e_by_size, xlabel=&quot;Size z (time t)&quot;,
+    ylabel=&quot;Marginal elasticity&quot;,
+    title=&quot;Elasticity by current size&quot;,
+    label=false, linewidth=2, fill=(0, 0.3, :blue))
+p2 = plot(z, e_by_size_prime, xlabel=&quot;Size z&#39; (time t+1)&quot;,
+    ylabel=&quot;Marginal elasticity&quot;,
+    title=&quot;Elasticity by future size&quot;,
+    label=false, linewidth=2, fill=(0, 0.3, :orange))
+plot(p1, p2, layout=(1, 2), size=(900, 350))</code></pre><img src="acec143d.svg" alt="Example block output"/><h2 id="Sensitivity-of-Lambda-to-Vital-Rate-Parameters"><a class="docs-heading-anchor" href="#Sensitivity-of-Lambda-to-Vital-Rate-Parameters">Sensitivity of Lambda to Vital Rate Parameters</a><a id="Sensitivity-of-Lambda-to-Vital-Rate-Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Sensitivity-of-Lambda-to-Vital-Rate-Parameters" title="Permalink"></a></h2><p>While the kernel-level sensitivity and elasticity are useful, we often want to know how <span>$\lambda$</span> responds to changes in specific vital rate parameters. We can estimate this numerically by perturbing each parameter and recomputing <span>$\lambda$</span>.</p><pre><code class="language-julia hljs">function compute_lambda(params)
+    si, sz, gi, gz, gsd, ri, rz, rci, rci_z, rci_sd = params
+
+    s(z) = 1.0 / (1.0 + exp(-(si + sz * z)))
+    g(z_prime, z) = pdf(Normal(gi + gz * z, gsd), z_prime)
+    pb(z) = 1.0 / (1.0 + exp(-(ri + rz * z)))
+    function fec(z_prime, z)
+        s(z) * pb(z) * 0.5 * pr_z() * pdf(Normal(rci_z * z + rci, rci_sd), z_prime)
+    end
+
+    P_k = PKernel(CustomVitalRate(s), CustomVitalRate(g), domain)
+    F_k = FKernel(CustomVitalRate(fec), domain)
+    K_k = materialize(P_k) + materialize(F_k)
+    e = eigen(K_k)
+    return real(e.values[argmax(real.(e.values))])
+end
+
+base_params = [surv_int, surv_z, grow_int, grow_z, grow_sd,
+               repr_int, repr_z, rcsz_int, rcsz_z, rcsz_sd]
+param_names = [&quot;surv_int&quot;, &quot;surv_z&quot;, &quot;grow_int&quot;, &quot;grow_z&quot;, &quot;grow_sd&quot;,
+               &quot;repr_int&quot;, &quot;repr_z&quot;, &quot;rcsz_int&quot;, &quot;rcsz_z&quot;, &quot;rcsz_sd&quot;]
+
+# Numerical sensitivity: ∂λ/∂θ ≈ (λ(θ+ε) - λ(θ-ε)) / (2ε)
+ε = 1e-5
+sensitivities_param = Float64[]
+for i in eachindex(base_params)
+    p_plus = copy(base_params); p_plus[i] += ε
+    p_minus = copy(base_params); p_minus[i] -= ε
+    dλ = (compute_lambda(p_plus) - compute_lambda(p_minus)) / (2ε)
+    push!(sensitivities_param, dλ)
+end
+
+# Elasticity: (θ/λ) × ∂λ/∂θ
+elasticities_param = sensitivities_param .* base_params ./ λ</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">10-element Vector{Float64}:
+ -1.3384783268062015
+  1.5387020973582197
+  1.6507757902983882
+  1.9910457276096833
+ -0.0002808236807217221
+ -0.18706040292697193
+  0.2095235972031154
+  0.08898042219592932
+  0.5464730237877669
+  0.008744907540619762</code></pre><pre><code class="language-julia hljs">println(&quot;Parameter sensitivities and elasticities:&quot;)
+println(&quot;-&quot; ^ 55)
+for i in eachindex(param_names)
+    println(&quot;  $(rpad(param_names[i], 10)): &quot;,
+        &quot;sens = $(lpad(round(sensitivities_param[i], sigdigits=4), 10)), &quot;,
+        &quot;elas = $(lpad(round(elasticities_param[i], sigdigits=4), 10))&quot;)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Parameter sensitivities and elasticities:
+-------------------------------------------------------
+  surv_int  : sens =     0.1415, elas =     -1.338
+  surv_z    : sens =     0.4164, elas =      1.539
+  grow_int  : sens =      1.194, elas =      1.651
+  grow_z    : sens =      3.647, elas =      1.991
+  grow_sd   : sens =  -0.003586, elas = -0.0002808
+  repr_int  : sens =     0.0264, elas =    -0.1871
+  repr_z    : sens =    0.08222, elas =     0.2095
+  rcsz_int  : sens =     0.2508, elas =    0.08898
+  rcsz_z    : sens =     0.7864, elas =     0.5465
+  rcsz_sd   : sens =    0.05611, elas =   0.008745</code></pre><pre><code class="language-julia hljs">bar(param_names, abs.(elasticities_param),
+    xlabel=&quot;Parameter&quot;, ylabel=&quot;|Elasticity|&quot;,
+    title=&quot;Absolute elasticity of λ to vital rate parameters&quot;,
+    label=false, rotation=45, size=(700, 400))</code></pre><img src="33668fef.svg" alt="Example block output"/><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>In this vignette we:</p><ol><li>Computed the <strong>sensitivity matrix</strong> <span>$S(z&#39;, z) = v(z&#39;) w(z) / \langle v, w \rangle$</span></li><li>Computed the <strong>elasticity matrix</strong> <span>$e(z&#39;, z) = K(z&#39;, z) S(z&#39;, z) / \lambda$</span></li><li>Verified that elasticities sum to 1</li><li>Decomposed elasticities into P and F contributions — for Soay sheep, survival-growth (P) dominates</li><li>Computed numerical sensitivities and elasticities of <span>$\lambda$</span> to individual vital rate parameters</li></ol></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../03_eviction/">« Eviction Correction</a><a class="docs-footer-nextpage" href="../05_density_dependent/">Density-Dependent IPMs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 8 June 2026 23:57">Monday 8 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

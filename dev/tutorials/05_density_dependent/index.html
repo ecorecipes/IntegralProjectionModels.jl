@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Density-Dependent IPMs · IntegralProjectionModels.jl</title><meta name="title" content="Density-Dependent IPMs · IntegralProjectionModels.jl"/><meta property="og:title" content="Density-Dependent IPMs · IntegralProjectionModels.jl"/><meta property="twitter:title" content="Density-Dependent IPMs · IntegralProjectionModels.jl"/><meta name="description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="twitter:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/05_density_dependent/"/><meta property="twitter:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/05_density_dependent/"/><link rel="canonical" href="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/05_density_dependent/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">IntegralProjectionModels.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../01_introduction/">Introduction to Integral Projection Models</a></li><li><a class="tocitem" href="../02_ungulate/">Ungulate IPM: Soay Sheep</a></li><li><a class="tocitem" href="../03_eviction/">Eviction Correction</a></li><li><a class="tocitem" href="../04_sensitivity_elasticity/">Sensitivity and Elasticity Analysis</a></li><li class="is-active"><a class="tocitem" href>Density-Dependent IPMs</a><ul class="internal"><li><a class="tocitem" href="#Overview"><span>Overview</span></a></li><li><a class="tocitem" href="#Setup"><span>Setup</span></a></li><li><a class="tocitem" href="#Parameters"><span>Parameters</span></a></li><li><a class="tocitem" href="#Domain"><span>Domain</span></a></li><li><a class="tocitem" href="#Density-Dependent-Vital-Rates"><span>Density-Dependent Vital Rates</span></a></li><li><a class="tocitem" href="#Building-the-DD-Kernel"><span>Building the DD Kernel</span></a></li><li><a class="tocitem" href="#Lambda-as-a-Function-of-Population-Size"><span>Lambda as a Function of Population Size</span></a></li><li><a class="tocitem" href="#Finding-the-Equilibrium"><span>Finding the Equilibrium</span></a></li><li><a class="tocitem" href="#Population-Trajectories"><span>Population Trajectories</span></a></li><li><a class="tocitem" href="#Using-IPMProblem-with-DensityDependent()"><span>Using IPMProblem with DensityDependent()</span></a></li><li><a class="tocitem" href="#Equilibrium-Size-Distribution"><span>Equilibrium Size Distribution</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../06_stochastic/">Stochastic IPMs</a></li><li><a class="tocitem" href="../07_general_ipm/">General IPM with Seed Bank</a></li><li><a class="tocitem" href="../08_age_size/">Age x Size IPM</a></li><li><a class="tocitem" href="../09_categorical/">Categorical Composition of IPMs</a></li><li><a class="tocitem" href="../10_padrino/">PADRINO Database Integration</a></li><li><a class="tocitem" href="../11_evolving_ipm/">Evolving IPMs: Evolutionary Demography</a></li><li><a class="tocitem" href="../12_time_lag/">Time-Lagged Integral Projection Models</a></li><li><a class="tocitem" href="../13_diagnostics/">Spectral Diagnostics and Type Hierarchy</a></li><li><a class="tocitem" href="../14_kernels_and_helpers/">Kernel Composition and Helpers</a></li><li><a class="tocitem" href="../15_padrino_validation/">PADRINO Validation: Test Targets and λ Reproducibility</a></li><li><a class="tocitem" href="../16_lag_metrics/">Time-Lag Metrics: Augmentation, R0, and Generation Time</a></li><li><a class="tocitem" href="../17_ipm_mpm_bridge/">IPM ↔ MPM Discretization Bridge</a></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../api/domains/">Domains</a></li><li><a class="tocitem" href="../../api/vital_rates/">Vital Rates</a></li><li><a class="tocitem" href="../../api/kernels/">Kernels</a></li><li><a class="tocitem" href="../../api/types/">Types &amp; Traits</a></li><li><a class="tocitem" href="../../api/problems/">Problem &amp; Solution</a></li><li><a class="tocitem" href="../../api/analysis/">Analysis</a></li><li><a class="tocitem" href="../../api/time_lag/">Time-Lag Models</a></li><li><a class="tocitem" href="../../api/age_size/">Age×Size Models</a></li><li><a class="tocitem" href="../../api/categorical/">Categorical Composition</a></li><li><a class="tocitem" href="../../api/sciml/">SciML Interface</a></li><li><a class="tocitem" href="../../api/utilities/">Utilities</a></li><li><a class="tocitem" href="../../api/padrino/">PADRINO Integration</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Density-Dependent IPMs</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Density-Dependent IPMs</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/docs/src/tutorials/05_density_dependent.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Density-Dependent-IPMs"><a class="docs-heading-anchor" href="#Density-Dependent-IPMs">Density-Dependent IPMs</a><a id="Density-Dependent-IPMs-1"></a><a class="docs-heading-anchor-permalink" href="#Density-Dependent-IPMs" title="Permalink"></a></h1><h2 id="Overview"><a class="docs-heading-anchor" href="#Overview">Overview</a><a id="Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Overview" title="Permalink"></a></h2><p>In density-dependent (DD) IPMs, vital rates depend on the current population size <span>$N_t = \int n(z, t) \, dz$</span>. The kernel <span>$K(z&#39;, z; N_t)$</span> is rebuilt at each time step, so the population dynamics are nonlinear.</p><p>This vignette models <strong>Soay sheep</strong> with density-dependent survival, recruitment probability, and recruit size, following Ellner, Childs &amp; Rees (Chapter 5). The key goal is to find the <strong>equilibrium population size</strong> <span>$\bar{N}$</span> where <span>$\lambda(N) = 1$</span>.</p><h2 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h2><pre><code class="language-julia hljs">using IntegralProjectionModels
+using Distributions
+using LinearAlgebra
+using Plots</code></pre><h2 id="Parameters"><a class="docs-heading-anchor" href="#Parameters">Parameters</a><a id="Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Parameters" title="Permalink"></a></h2><p>Density-dependent parameters have an additional <code>Nt</code> term that reduces the vital rate as population size increases.</p><pre><code class="language-julia hljs"># Survival (density dependent: surv.Nt &lt; 0)
+surv_int = 1.06
+surv_z = 2.09
+surv_Nt = -0.018
+
+# Growth (NOT density dependent)
+grow_int = 1.41
+grow_z = 0.557
+grow_sd = 0.0799
+
+# Reproduction probability (NOT density dependent)
+repr_int = -7.23
+repr_z = 2.60
+
+# Recruitment probability (density dependent)
+recr_int = 4.43
+recr_Nt = -0.00919
+
+# Recruit size (density dependent)
+rcsz_int = 0.540
+rcsz_z = 0.710
+rcsz_Nt = -0.000642
+rcsz_sd = 0.159</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.159</code></pre><h2 id="Domain"><a class="docs-heading-anchor" href="#Domain">Domain</a><a id="Domain-1"></a><a class="docs-heading-anchor-permalink" href="#Domain" title="Permalink"></a></h2><pre><code class="language-julia hljs">L = 0.5
+U = 3.8
+m = 165
+
+domain = ContinuousDomain(L, U, m)
+z = meshpoints(domain)
+h = step_size(domain)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.02</code></pre><h2 id="Density-Dependent-Vital-Rates"><a class="docs-heading-anchor" href="#Density-Dependent-Vital-Rates">Density-Dependent Vital Rates</a><a id="Density-Dependent-Vital-Rates-1"></a><a class="docs-heading-anchor-permalink" href="#Density-Dependent-Vital-Rates" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Survival depends on total population N
+s_z(z, Nt) = 1.0 / (1.0 + exp(-(surv_int + surv_z * z + surv_Nt * Nt)))
+
+# Growth (density independent)
+g_z1z(z_prime, z) = pdf(Normal(grow_int + grow_z * z, grow_sd), z_prime)
+
+# Reproduction probability (density independent)
+pb_z(z) = 1.0 / (1.0 + exp(-(repr_int + repr_z * z)))
+
+# Recruitment probability depends on N
+pr_z(Nt) = 1.0 / (1.0 + exp(-(recr_int + recr_Nt * Nt)))
+
+# Recruit size depends on maternal size and N
+c_z1z(z_prime, z, Nt) = pdf(Normal(rcsz_int + rcsz_z * z + rcsz_Nt * Nt, rcsz_sd), z_prime)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">c_z1z (generic function with 1 method)</code></pre><h3 id="Visualize-DD-Effects"><a class="docs-heading-anchor" href="#Visualize-DD-Effects">Visualize DD Effects</a><a id="Visualize-DD-Effects-1"></a><a class="docs-heading-anchor-permalink" href="#Visualize-DD-Effects" title="Permalink"></a></h3><pre><code class="language-julia hljs">N_vals = [50, 200, 323, 450]
+z_plot = range(1.5, 3.5, length=100)
+
+p1 = plot(title=&quot;Survival vs size at different N&quot;, xlabel=&quot;Size&quot;, ylabel=&quot;s(z)&quot;)
+p2 = plot(title=&quot;Recruitment probability vs N&quot;, xlabel=&quot;N&quot;, ylabel=&quot;p_r(N)&quot;)
+
+for N in N_vals
+    plot!(p1, z_plot, [s_z(zi, N) for zi in z_plot], label=&quot;N=$N&quot;, linewidth=2)
+end
+
+N_range = range(0, 500, length=100)
+plot!(p2, N_range, [pr_z(N) for N in N_range], label=false, linewidth=2)
+
+plot(p1, p2, layout=(1, 2), size=(900, 400))</code></pre><img src="90d9825a.svg" alt="Example block output"/><h2 id="Building-the-DD-Kernel"><a class="docs-heading-anchor" href="#Building-the-DD-Kernel">Building the DD Kernel</a><a id="Building-the-DD-Kernel-1"></a><a class="docs-heading-anchor-permalink" href="#Building-the-DD-Kernel" title="Permalink"></a></h2><p>For a DD model, the kernel is a function of the current population state. We pass this function to <code>IPMProblem</code> with the <code>DensityDependent()</code> tag.</p><pre><code class="language-julia hljs">function dd_kernel(n_t, t, p)
+    Nt = sum(n_t) * h  # total population (integrate over domain)
+
+    # Survival-growth kernel
+    function P_z1z(z_prime, z)
+        return s_z(z, Nt) * g_z1z(z_prime, z)
+    end
+
+    # Fecundity kernel
+    function F_z1z(z_prime, z)
+        return 0.5 * s_z(z, Nt) * pb_z(z) * pr_z(Nt) * c_z1z(z_prime, z, Nt)
+    end
+
+    P = PKernel(CustomVitalRate(z -&gt; s_z(z, Nt)), CustomVitalRate(g_z1z), domain)
+    F = FKernel(CustomVitalRate(F_z1z), domain)
+    return P + F
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">dd_kernel (generic function with 1 method)</code></pre><h2 id="Lambda-as-a-Function-of-Population-Size"><a class="docs-heading-anchor" href="#Lambda-as-a-Function-of-Population-Size">Lambda as a Function of Population Size</a><a id="Lambda-as-a-Function-of-Population-Size-1"></a><a class="docs-heading-anchor-permalink" href="#Lambda-as-a-Function-of-Population-Size" title="Permalink"></a></h2><p>At the equilibrium population size <span>$\bar{N}$</span>, the asymptotic growth rate <span>$\lambda(\bar{N}) = 1$</span>. We can compute <span>$\lambda(N)$</span> for a range of <span>$N$</span> values.</p><pre><code class="language-julia hljs">function lambda_at_N(N)
+    # Build kernel at density N
+    # Create a population vector scaled to total N
+    n_dummy = fill(N / (m * h), m)  # uniform distribution with total = N/h
+    kern = dd_kernel(n_dummy, 1, nothing)
+    K = materialize(kern)
+    e = eigen(K)
+    return real(e.values[argmax(real.(e.values))])
+end
+
+N_test = range(100, 500, length=50)
+λ_test = lambda_at_N.(N_test)
+
+plot(N_test, λ_test,
+    xlabel=&quot;Total population N&quot;,
+    ylabel=&quot;λ(N)&quot;,
+    title=&quot;Growth rate vs population size&quot;,
+    label=&quot;λ(N)&quot;,
+    linewidth=2)
+hline!([1.0], label=&quot;λ = 1&quot;, linestyle=:dash, color=:red)</code></pre><img src="ba5605b3.svg" alt="Example block output"/><h2 id="Finding-the-Equilibrium"><a class="docs-heading-anchor" href="#Finding-the-Equilibrium">Finding the Equilibrium</a><a id="Finding-the-Equilibrium-1"></a><a class="docs-heading-anchor-permalink" href="#Finding-the-Equilibrium" title="Permalink"></a></h2><p>The equilibrium <span>$\bar{N}$</span> is the population size where <span>$\lambda(N) = 1$</span>. We find it using bisection.</p><pre><code class="language-julia hljs">function find_equilibrium(f, lo, hi; tol=1e-6, maxiter=100)
+    for i in 1:maxiter
+        mid = (lo + hi) / 2
+        val = f(mid) - 1.0
+        if abs(val) &lt; tol
+            return mid
+        elseif val &gt; 0
+            lo = mid
+        else
+            hi = mid
+        end
+    end
+    return (lo + hi) / 2
+end
+
+N_eq = find_equilibrium(lambda_at_N, 200.0, 400.0)
+λ_eq = lambda_at_N(N_eq)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.9999992753095688</code></pre><pre><code class="language-julia hljs">println(&quot;Equilibrium population: N̄ = &quot;, round(N_eq, digits=1), &quot; females&quot;)
+println(&quot;λ at equilibrium: &quot;, round(λ_eq, digits=6))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Equilibrium population: N̄ = 322.7 females
+λ at equilibrium: 0.999999</code></pre><p>The equilibrium is approximately <strong>323 females</strong>, matching the R result from <code>uniroot</code>.</p><h2 id="Population-Trajectories"><a class="docs-heading-anchor" href="#Population-Trajectories">Population Trajectories</a><a id="Population-Trajectories-1"></a><a class="docs-heading-anchor-permalink" href="#Population-Trajectories" title="Permalink"></a></h2><p>We can iterate the DD-IPM from different starting population sizes to see convergence to the equilibrium.</p><pre><code class="language-julia hljs">function iterate_dd(N0, n_steps)
+    # Start with stable distribution at density N0
+    n_dummy = fill(N0 / (m * h), m)
+    kern = dd_kernel(n_dummy, 1, nothing)
+    K = materialize(kern)
+    e = eigen(K)
+    w = real.(e.vectors[:, argmax(real.(e.values))])
+    w = abs.(w)
+
+    # Scale to desired total population
+    n_t = w .* (N0 / (h * sum(w)))
+    Nt_series = Float64[sum(n_t) * h]
+
+    for t in 1:n_steps
+        kern = dd_kernel(n_t, t, nothing)
+        K_t = materialize(kern)
+        n_t = K_t * n_t
+        push!(Nt_series, sum(n_t) * h)
+    end
+    return Nt_series
+end
+
+N0_vals = [50, 150, 250, 350, 450]
+n_steps = 20
+
+plt = plot(xlabel=&quot;Time step&quot;, ylabel=&quot;Total population N&quot;,
+    title=&quot;DD-IPM trajectories from different starting sizes&quot;)
+for N0 in N0_vals
+    Nt = iterate_dd(N0, n_steps)
+    plot!(plt, 0:n_steps, Nt, label=&quot;N₀ = $N0&quot;, linewidth=2)
+end
+hline!(plt, [N_eq], label=&quot;Equilibrium ≈ $(round(Int, N_eq))&quot;, linestyle=:dash, color=:black)
+plt</code></pre><img src="e76077e1.svg" alt="Example block output"/><p>All trajectories converge to the same equilibrium, regardless of starting population size.</p><h2 id="Using-IPMProblem-with-DensityDependent()"><a class="docs-heading-anchor" href="#Using-IPMProblem-with-DensityDependent()">Using IPMProblem with DensityDependent()</a><a id="Using-IPMProblem-with-DensityDependent()-1"></a><a class="docs-heading-anchor-permalink" href="#Using-IPMProblem-with-DensityDependent()" title="Permalink"></a></h2><p>We can also use the <code>IPMProblem</code> interface with the <code>DensityDependent()</code> tag.</p><pre><code class="language-julia hljs">n0_dd = fill(50.0 / (m * h), m)  # Start at N = 50
+prob_dd = IPMProblem(DensityDependent(), dd_kernel, domain, n0_dd, (0, 30))
+sol_dd = solve(prob_dd)
+
+# Population trajectory
+total_pop = [sum(u) * h for u in sol_dd.u]
+
+plot(0:30, total_pop,
+    xlabel=&quot;Time step&quot;, ylabel=&quot;Total population N&quot;,
+    title=&quot;DD-IPM via IPMProblem interface&quot;,
+    label=&quot;N(t)&quot;, linewidth=2)
+hline!([N_eq], label=&quot;Equilibrium&quot;, linestyle=:dash, color=:red)</code></pre><img src="c30cac66.svg" alt="Example block output"/><pre><code class="language-julia hljs"># Per-step growth rates
+plot(sol_dd.lambdas,
+    xlabel=&quot;Time step&quot;, ylabel=&quot;λ(t)&quot;,
+    title=&quot;Per-step growth rate (DD model)&quot;,
+    label=&quot;λ(t)&quot;, linewidth=2)
+hline!([1.0], label=&quot;λ = 1&quot;, linestyle=:dash, color=:red)</code></pre><img src="700af897.svg" alt="Example block output"/><h2 id="Equilibrium-Size-Distribution"><a class="docs-heading-anchor" href="#Equilibrium-Size-Distribution">Equilibrium Size Distribution</a><a id="Equilibrium-Size-Distribution-1"></a><a class="docs-heading-anchor-permalink" href="#Equilibrium-Size-Distribution" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Iterate to convergence from equilibrium N
+let n_eq = fill(N_eq / (m * h), m)
+    for _ in 1:50
+        kern = dd_kernel(n_eq, 1, nothing)
+        K_eq = materialize(kern)
+        n_eq = K_eq * n_eq
+    end
+
+    # Normalize
+    n_eq_norm = n_eq ./ sum(n_eq)
+
+    plot(z, n_eq_norm,
+        xlabel=&quot;Log body mass&quot;, ylabel=&quot;Proportion&quot;,
+        title=&quot;Equilibrium size distribution (N̄ ≈ $(round(Int, N_eq)))&quot;,
+        label=false, linewidth=2, fill=(0, 0.3, :blue))
+end</code></pre><img src="e4bcd363.svg" alt="Example block output"/><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>In this vignette we:</p><ol><li>Built a density-dependent IPM where survival, recruitment, and recruit size decrease with population size</li><li>Computed <span>$\lambda(N)$</span> across a range of population sizes</li><li>Found the equilibrium population <span>$\bar{N} \approx 323$</span> females where <span>$\lambda = 1$</span></li><li>Demonstrated convergence from multiple starting conditions</li><li>Used both manual iteration and the <code>IPMProblem(DensityDependent(), ...)</code> interface</li></ol></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../04_sensitivity_elasticity/">« Sensitivity and Elasticity Analysis</a><a class="docs-footer-nextpage" href="../06_stochastic/">Stochastic IPMs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 8 June 2026 23:57">Monday 8 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

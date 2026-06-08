@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Categorical Composition of IPMs · IntegralProjectionModels.jl</title><meta name="title" content="Categorical Composition of IPMs · IntegralProjectionModels.jl"/><meta property="og:title" content="Categorical Composition of IPMs · IntegralProjectionModels.jl"/><meta property="twitter:title" content="Categorical Composition of IPMs · IntegralProjectionModels.jl"/><meta name="description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="twitter:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/09_categorical/"/><meta property="twitter:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/09_categorical/"/><link rel="canonical" href="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/09_categorical/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">IntegralProjectionModels.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../01_introduction/">Introduction to Integral Projection Models</a></li><li><a class="tocitem" href="../02_ungulate/">Ungulate IPM: Soay Sheep</a></li><li><a class="tocitem" href="../03_eviction/">Eviction Correction</a></li><li><a class="tocitem" href="../04_sensitivity_elasticity/">Sensitivity and Elasticity Analysis</a></li><li><a class="tocitem" href="../05_density_dependent/">Density-Dependent IPMs</a></li><li><a class="tocitem" href="../06_stochastic/">Stochastic IPMs</a></li><li><a class="tocitem" href="../07_general_ipm/">General IPM with Seed Bank</a></li><li><a class="tocitem" href="../08_age_size/">Age x Size IPM</a></li><li class="is-active"><a class="tocitem" href>Categorical Composition of IPMs</a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#Setup"><span>Setup</span></a></li><li><a class="tocitem" href="#The-Ligustrum-Model"><span>The Ligustrum Model</span></a></li><li><a class="tocitem" href="#Sub-Kernels-as-Morphisms"><span>Sub-Kernels as Morphisms</span></a></li><li><a class="tocitem" href="#Operadic-Composition-via-UWD-(Simple-IPM)"><span>Operadic Composition via UWD (Simple IPM)</span></a></li><li><a class="tocitem" href="#General-IPM-as-Block-Structured-Composition"><span>General IPM as Block-Structured Composition</span></a></li><li><a class="tocitem" href="#Stratification:-Spatial-Extension"><span>Stratification: Spatial Extension</span></a></li><li><a class="tocitem" href="#Coarsening-via-Pushforward"><span>Coarsening via Pushforward</span></a></li><li><a class="tocitem" href="#Functorial-Semantics"><span>Functorial Semantics</span></a></li><li><a class="tocitem" href="#Commutation:-Discretise-then-Stratify-Stratify-then-Discretise"><span>Commutation: Discretise then Stratify = Stratify then Discretise</span></a></li><li><a class="tocitem" href="#Summary-of-Categorical-Constructions"><span>Summary of Categorical Constructions</span></a></li></ul></li><li><a class="tocitem" href="../10_padrino/">PADRINO Database Integration</a></li><li><a class="tocitem" href="../11_evolving_ipm/">Evolving IPMs: Evolutionary Demography</a></li><li><a class="tocitem" href="../12_time_lag/">Time-Lagged Integral Projection Models</a></li><li><a class="tocitem" href="../13_diagnostics/">Spectral Diagnostics and Type Hierarchy</a></li><li><a class="tocitem" href="../14_kernels_and_helpers/">Kernel Composition and Helpers</a></li><li><a class="tocitem" href="../15_padrino_validation/">PADRINO Validation: Test Targets and λ Reproducibility</a></li><li><a class="tocitem" href="../16_lag_metrics/">Time-Lag Metrics: Augmentation, R0, and Generation Time</a></li><li><a class="tocitem" href="../17_ipm_mpm_bridge/">IPM ↔ MPM Discretization Bridge</a></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../api/domains/">Domains</a></li><li><a class="tocitem" href="../../api/vital_rates/">Vital Rates</a></li><li><a class="tocitem" href="../../api/kernels/">Kernels</a></li><li><a class="tocitem" href="../../api/types/">Types &amp; Traits</a></li><li><a class="tocitem" href="../../api/problems/">Problem &amp; Solution</a></li><li><a class="tocitem" href="../../api/analysis/">Analysis</a></li><li><a class="tocitem" href="../../api/time_lag/">Time-Lag Models</a></li><li><a class="tocitem" href="../../api/age_size/">Age×Size Models</a></li><li><a class="tocitem" href="../../api/categorical/">Categorical Composition</a></li><li><a class="tocitem" href="../../api/sciml/">SciML Interface</a></li><li><a class="tocitem" href="../../api/utilities/">Utilities</a></li><li><a class="tocitem" href="../../api/padrino/">PADRINO Integration</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Categorical Composition of IPMs</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Categorical Composition of IPMs</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/docs/src/tutorials/09_categorical.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Categorical-Composition-of-IPMs"><a class="docs-heading-anchor" href="#Categorical-Composition-of-IPMs">Categorical Composition of IPMs</a><a id="Categorical-Composition-of-IPMs-1"></a><a class="docs-heading-anchor-permalink" href="#Categorical-Composition-of-IPMs" title="Permalink"></a></h1><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>Integral Projection Models can become complex: survival, growth, fecundity, seed banks, age structure, spatial patches. <strong>Applied category theory</strong> provides a principled framework for composing such models from smaller, reusable parts.</p><p>Key ideas:</p><ul><li><strong>Sub-kernels as morphisms</strong>: each vital rate process (survival-growth, fecundity, seed bank transitions) is a morphism in a Markov category</li><li><strong>Operadic composition</strong>: an undirected wiring diagram (UWD) specifies <em>how</em> sub-processes share trait axes; the composition rule sums their contributions</li><li><strong>Left/Right Kan extensions</strong>: translate between IPMs (continuous kernels) and MPMs (discrete matrices), with quantified approximation error</li><li><strong>Stratification</strong>: extend a local model to multiple spatial patches via a pullback construction</li><li><strong>Functorial semantics</strong>: derive multiple analyses (deterministic projection, sensitivity, stochastic simulation) from a single model specification</li></ul><p>This vignette demonstrates these ideas using the Ligustrum general IPM from <a href="07_general_ipm.qmd">vignette 07</a>, which includes a discrete seed bank.</p><h2 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h2><pre><code class="language-julia hljs">using IntegralProjectionModels
+using Catlab
+using Catlab.CategoricalAlgebra
+using Catlab.WiringDiagrams
+using Catlab.Programs
+using Distributions
+using LinearAlgebra</code></pre><h2 id="The-Ligustrum-Model"><a class="docs-heading-anchor" href="#The-Ligustrum-Model">The Ligustrum Model</a><a id="The-Ligustrum-Model-1"></a><a class="docs-heading-anchor-permalink" href="#The-Ligustrum-Model" title="Permalink"></a></h2><p>We reuse the <em>Ligustrum obtusifolium</em> (border privet) model from vignette 07. The population has two states:</p><ul><li><strong>Height</strong> (<code>ht</code>): continuous, domain <span>$[1.02, 624]$</span> cm</li><li><strong>Seed bank</strong> (<code>b</code>): discrete, single pool</li></ul><h3 id="Parameters"><a class="docs-heading-anchor" href="#Parameters">Parameters</a><a id="Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Parameters" title="Permalink"></a></h3><pre><code class="language-julia hljs">ctrl = (
+    g_int     = 5.781,
+    g_slope   = 0.988,
+    g_sd      = 20.55699,
+    s_int     = -0.352,
+    s_slope   = 0.122,
+    s_slope_2 = -0.000213,
+    f_r_int   = -11.46,
+    f_r_slope = 0.0835,
+    f_s_int   = 2.6204,
+    f_s_slope = 0.01256,
+    f_d_mu    = 5.6655,
+    f_d_sd    = 2.0734,
+    e_p       = 0.15,
+    g_i       = 0.5067,
+)
+
+cr = (
+    g_int     = 7.229,
+    g_slope   = 0.988,
+    g_sd      = 21.72262,
+    s_int     = 0.0209,
+    s_slope   = 0.0831,
+    s_slope_2 = -0.00012999,
+    f_r_int   = -11.46,
+    f_r_slope = 0.0835,
+    f_s_int   = 2.6204,
+    f_s_slope = 0.01256,
+    f_d_mu    = 5.6655,
+    f_d_sd    = 2.0734,
+    e_p       = 0.15,
+    g_i       = 0.5067,
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(g_int = 7.229, g_slope = 0.988, g_sd = 21.72262, s_int = 0.0209, s_slope = 0.0831, s_slope_2 = -0.00012999, f_r_int = -11.46, f_r_slope = 0.0835, f_s_int = 2.6204, f_s_slope = 0.01256, f_d_mu = 5.6655, f_d_sd = 2.0734, e_p = 0.15, g_i = 0.5067)</code></pre><h3 id="Domain-and-Vital-Rates"><a class="docs-heading-anchor" href="#Domain-and-Vital-Rates">Domain and Vital Rates</a><a id="Domain-and-Vital-Rates-1"></a><a class="docs-heading-anchor-permalink" href="#Domain-and-Vital-Rates" title="Permalink"></a></h3><pre><code class="language-julia hljs">L = 1.02
+U = 624.0
+n = 500
+
+ht_domain = ContinuousDomain(L, U, n)
+b_domain = DiscreteDomain([:seeds])
+
+z = meshpoints(ht_domain)
+h = step_size(ht_domain)
+
+# Vital rate functions
+function survival(z, p)
+    1.0 / (1.0 + exp(-(p.s_int + p.s_slope * z + p.s_slope_2 * z^2)))
+end
+
+function growth(z_prime, z, p)
+    mu = p.g_int + p.g_slope * z
+    d = Normal(mu, p.g_sd)
+    ev = cdf(d, U) - cdf(d, L)
+    return ev &gt; 0 ? pdf(d, z_prime) / ev : pdf(d, z_prime)
+end
+
+function repr_prob(z, p)
+    1.0 / (1.0 + exp(-(p.f_r_int + p.f_r_slope * z)))
+end
+
+function seed_prod(z, p)
+    exp(p.f_s_int + p.f_s_slope * z)
+end
+
+function offspring_size(z_prime, p)
+    d = Normal(p.f_d_mu, p.f_d_sd)
+    ev = cdf(d, U) - cdf(d, L)
+    return ev &gt; 0 ? pdf(d, z_prime) / ev : pdf(d, z_prime)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">offspring_size (generic function with 1 method)</code></pre><h2 id="Sub-Kernels-as-Morphisms"><a class="docs-heading-anchor" href="#Sub-Kernels-as-Morphisms">Sub-Kernels as Morphisms</a><a id="Sub-Kernels-as-Morphisms-1"></a><a class="docs-heading-anchor-permalink" href="#Sub-Kernels-as-Morphisms" title="Permalink"></a></h2><p>In the Markov category <strong>Krn</strong>, each vital rate process is a morphism. We define the Ligustrum sub-kernels as standalone functions:</p><pre><code class="language-julia hljs"># CC: survival-growth kernel P(z&#39;, z)
+P_kernel(z_new, z, p) = survival(z, p) * growth(z_new, z, p)
+
+# CC: fecundity kernel F(z&#39;, z) — direct recruitment (bypassing seed bank)
+# (Not used in the general model, but included for the simple-IPM demo)
+F_kernel(z_new, z, p) = repr_prob(z, p) * seed_prod(z, p) * (1 - p.g_i) *
+    p.e_p * offspring_size(z_new, p)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">F_kernel (generic function with 1 method)</code></pre><h2 id="Operadic-Composition-via-UWD-(Simple-IPM)"><a class="docs-heading-anchor" href="#Operadic-Composition-via-UWD-(Simple-IPM)">Operadic Composition via UWD (Simple IPM)</a><a id="Operadic-Composition-via-UWD-(Simple-IPM)-1"></a><a class="docs-heading-anchor-permalink" href="#Operadic-Composition-via-UWD-(Simple-IPM)" title="Permalink"></a></h2><p>Before tackling the full general IPM, consider the simpler case where <span>$K = P + F$</span> — a single continuous state with no seed bank. The decomposition into survival-growth and fecundity sub-kernels is captured by an <strong>undirected wiring diagram</strong> (UWD): two boxes share the same trait axes <span>$(z, z&#39;)$</span>, and the operad&#39;s composition rule sums their contributions.</p><pre><code class="language-julia hljs"># Define the wiring pattern
+demographic_uwd = @relation (z, z_new) begin
+    survive_grow(z, z_new)
+    reproduce(z, z_new)
+end</code></pre><div class="c-set">
+<span class="c-set-summary">Catlab.WiringDiagrams.RelationDiagrams.UntypedUnnamedRelationDiagram{Symbol, Symbol} {Box:2, Port:4, OuterPort:2, Junction:2, Name:0, VarName:0}</span>
+<table>
+  <thead>
+    <tr class = "columnLabelRow">
+      <th class = "stubheadLabel" style = "font-weight: bold; text-align: right;">Box</th>
+      <th style = "font-weight: bold; text-align: right;">name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">1</td>
+      <td style = "text-align: right;">survive_grow</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">2</td>
+      <td style = "text-align: right;">reproduce</td>
+    </tr>
+  </tbody>
+</table>
+<table>
+  <thead>
+    <tr class = "columnLabelRow">
+      <th class = "stubheadLabel" style = "font-weight: bold; text-align: right;">Port</th>
+      <th style = "font-weight: bold; text-align: right;">box</th>
+      <th style = "font-weight: bold; text-align: right;">junction</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">1</td>
+      <td style = "text-align: right;">1</td>
+      <td style = "text-align: right;">1</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">2</td>
+      <td style = "text-align: right;">1</td>
+      <td style = "text-align: right;">2</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">3</td>
+      <td style = "text-align: right;">2</td>
+      <td style = "text-align: right;">1</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">4</td>
+      <td style = "text-align: right;">2</td>
+      <td style = "text-align: right;">2</td>
+    </tr>
+  </tbody>
+</table>
+<table>
+  <thead>
+    <tr class = "columnLabelRow">
+      <th class = "stubheadLabel" style = "font-weight: bold; text-align: right;">OuterPort</th>
+      <th style = "font-weight: bold; text-align: right;">outer_junction</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">1</td>
+      <td style = "text-align: right;">1</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">2</td>
+      <td style = "text-align: right;">2</td>
+    </tr>
+  </tbody>
+</table>
+<table>
+  <thead>
+    <tr class = "columnLabelRow">
+      <th class = "stubheadLabel" style = "font-weight: bold; text-align: right;">Junction</th>
+      <th style = "font-weight: bold; text-align: right;">variable</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">1</td>
+      <td style = "text-align: right;">z</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">2</td>
+      <td style = "text-align: right;">z_new</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<pre><code class="language-julia hljs">println(&quot;UWD for K = P + F:&quot;)
+println(&quot;  Boxes:     $(length(boxes(demographic_uwd)))  (survive_grow, reproduce)&quot;)
+println(&quot;  Junctions: $(length(junctions(demographic_uwd)))  (z, z_new)&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">UWD for K = P + F:
+  Boxes:     2  (survive_grow, reproduce)
+  Junctions: 2  (z, z_new)</code></pre><p>Evaluate by plugging in concrete sub-kernels:</p><pre><code class="language-julia hljs">sub_kernels_simple = Dict(
+    :survive_grow =&gt; (z_new, z) -&gt; P_kernel(z_new, z, ctrl),
+    :reproduce    =&gt; (z_new, z) -&gt; F_kernel(z_new, z, ctrl),
+)
+
+K_simple = compose_from_uwd(demographic_uwd, sub_kernels_simple, ht_domain)
+
+# Verify: same as compose_kernels without Catlab
+K_simple_check = compose_kernels(sub_kernels_simple, ht_domain)
+println(&quot;UWD vs direct composition match: &quot;, isapprox(K_simple, K_simple_check))
+
+λ_simple = maximum(real.(eigvals(K_simple)))
+println(&quot;Simple IPM (P + F, no seed bank) λ = &quot;, round(λ_simple, digits=4))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">UWD vs direct composition match: true
+Simple IPM (P + F, no seed bank) λ = 1.2347</code></pre><h2 id="General-IPM-as-Block-Structured-Composition"><a class="docs-heading-anchor" href="#General-IPM-as-Block-Structured-Composition">General IPM as Block-Structured Composition</a><a id="General-IPM-as-Block-Structured-Composition-1"></a><a class="docs-heading-anchor-permalink" href="#General-IPM-as-Block-Structured-Composition" title="Permalink"></a></h2><p>The full Ligustrum model has four transition blocks forming the mega-kernel:</p><p class="math-container">\[
+K = \begin{pmatrix} K_{CC} &amp; K_{DC} \\ K_{CD} &amp; K_{DD} \end{pmatrix}
+$$
+
+Each block is a morphism between different state spaces. We build this using the existing `MegaKernel` infrastructure, but the sub-kernels are defined as standalone functions — ready for categorical composition.
+
+```@example ipm
+function build_categorical_model(p)
+    # CC: survival × growth (500×500)
+    cc_kernel = PKernel(
+        CustomVitalRate(z -&gt; survival(z, p)),
+        CustomVitalRate((z_prime, z) -&gt; growth(z_prime, z, p)),
+        ht_domain
+    )
+
+    # CD: continuous → discrete — seeds entering bank (1×500)
+    cd_func(z) = repr_prob(z, p) * seed_prod(z, p) * p.g_i
+    cd_values = [cd_func(zi) for zi in z]
+    cd_matrix = reshape(cd_values, 1, n)
+
+    # DC: discrete → continuous — seedlings emerging (500×1)
+    dc_values = [p.e_p * offspring_size(zi, p) * h for zi in z]
+    dc_matrix = reshape(dc_values, n, 1)
+
+    # DD: discrete → discrete — stay in bank (1×1, = 0)
+    dd_matrix = zeros(1, 1)
+
+    states = (ht=ht_domain, b=b_domain)
+    mega = MegaKernel(;
+        states=states,
+        ht_to_ht=cc_kernel,
+        ht_to_b=MatrixKernel(cd_matrix),
+        b_to_ht=MatrixKernel(dc_matrix),
+        b_to_b=MatrixKernel(dd_matrix)
+    )
+    return mega
+end
+
+mega_ctrl = build_categorical_model(ctrl)
+mega_cr = build_categorical_model(cr)
+```
+
+## Lowering to Concrete Matrices
+
+Materialise the mega-kernels and verify against published values:
+
+```@example ipm
+K_ctrl = materialize(mega_ctrl)
+K_cr = materialize(mega_cr)
+
+e_ctrl = eigen(K_ctrl)
+e_cr = eigen(K_cr)
+
+λ_ctrl = real(e_ctrl.values[argmax(real.(e_ctrl.values))])
+λ_cr = real(e_cr.values[argmax(real.(e_cr.values))])
+```
+
+```@example ipm
+println(&quot;Control:  λ = &quot;, round(λ_ctrl, digits=4), &quot;  (published ≈ 1.22)&quot;)
+println(&quot;CR:       λ = &quot;, round(λ_cr, digits=4), &quot;  (published ≈ 1.26)&quot;)
+```
+
+## Left Kan Extension: IPM → MPM
+
+The **left Kan extension** discretises a continuous kernel function into a matrix using the midpoint rule. This is the standard IPM-to-MPM translation.
+
+We demonstrate convergence of $\lambda$ as the mesh refines, using just the CC (survival-growth) block:
+
+```@example ipm
+# Reference: high-resolution CC block
+cc_fn(z_new, z) = P_kernel(z_new, z, ctrl)
+ref_domain = ContinuousDomain(L, U, 500)
+A_ref = left_kan_extension(cc_fn, ref_domain)
+λ_ref = maximum(real.(eigvals(A_ref)))
+
+println(&quot;Convergence of λ for CC block (survival-growth):\n&quot;)
+println(&quot;  n_bins │    λ      │  |Δλ| from ref&quot;)
+println(&quot; ────────┼───────────┼─────────────────&quot;)
+for nb in [5, 10, 20, 50, 100, 200, 500]
+    dom_nb = ContinuousDomain(L, U, nb)
+    A_nb = left_kan_extension(cc_fn, dom_nb)
+    λ_nb = maximum(real.(eigvals(A_nb)))
+    Δ = abs(λ_nb - λ_ref)
+    marker = nb == 500 ? &quot; ← reference&quot; : &quot;&quot;
+    println(&quot;  $(lpad(nb, 5)) │ $(lpad(round(λ_nb, digits=6), 9)) │ $(lpad(round(Δ, sigdigits=2), 14))$marker&quot;)
+end
+```
+
+## Right Kan Extension: MPM → IPM
+
+The **right Kan extension** constructs a piecewise-constant kernel from a matrix — the most conservative continuous representation of an MPM:
+
+$$K_{\mathrm{pw}}(z&#39;, z) = \frac{A_{ij}}{h} \quad \text{where } z \in B_j,\; z&#39; \in B_i\]</p><pre><code class="language- hljs"># Discretise at n=20, then reconstruct
+dom_20 = ContinuousDomain(L, U, 20)
+A_20 = left_kan_extension(cc_fn, dom_20)
+K_pw = right_kan_extension(A_20, dom_20)
+
+# Compare original vs piecewise at sample points
+println(&quot;Round trip: IPM → MPM(n=20) → piecewise IPM\n&quot;)
+println(&quot;  (z&#39;, z)          │ K_original  │ K_piecewise │  |Δ|&quot;)
+println(&quot; ──────────────────┼─────────────┼─────────────┼───────&quot;)
+for (zn, zv) in [(50.0, 50.0), (100.0, 200.0), (300.0, 300.0), (500.0, 400.0)]
+    k_orig = cc_fn(zn, zv)
+    k_pw = K_pw(zn, zv)
+    Δ = abs(k_orig - k_pw)
+    zn_s = lpad(round(zn, digits=0), 5)
+    zv_s = lpad(round(zv, digits=0), 5)
+    println(&quot;  ($zn_s, $zv_s)     │ $(lpad(round(k_orig, digits=6), 11)) │ $(lpad(round(k_pw, digits=6), 11)) │ $(round(Δ, digits=6))&quot;)
+end</code></pre><h3 id="Adjunction-Errors"><a class="docs-heading-anchor" href="#Adjunction-Errors">Adjunction Errors</a><a id="Adjunction-Errors-1"></a><a class="docs-heading-anchor-permalink" href="#Adjunction-Errors" title="Permalink"></a></h3><p>The adjunction <span>$\mathrm{Lan}_D \dashv D^* \dashv \mathrm{Ran}_D$</span> has a <strong>unit</strong> (MPM self-consistency) and <strong>counit</strong> (round-trip approximation quality):</p><pre><code class="language- hljs">function adjunction_errors(kernel_fn, domain_n)
+    A = left_kan_extension(kernel_fn, domain_n)
+    K_pw = right_kan_extension(A, domain_n)
+    A_roundtrip = left_kan_extension(K_pw, domain_n)
+
+    # Unit error: should be ~0 for midpoint rule
+    unit_err = norm(A_roundtrip - A) / norm(A)
+
+    # Counit error: L2 on fine grid
+    n_test = 200
+    test_dom = ContinuousDomain(L, U, n_test)
+    z_test = meshpoints(test_dom)
+    h_test = step_size(test_dom)
+    counit_err = 0.0
+    for z in z_test, z_new in z_test
+        counit_err += (K_pw(z_new, z) - kernel_fn(z_new, z))^2
+    end
+    counit_err = sqrt(counit_err * h_test^2)
+
+    λ_n = maximum(real.(eigvals(A)))
+    λ_err = abs(λ_n - λ_ref)
+
+    return unit_err, counit_err, λ_err
+end
+
+println(&quot;  n_bins │ Unit (η)    │ Counit (ε)  │ |λ - λ_ref|&quot;)
+println(&quot; ────────┼─────────────┼─────────────┼────────────&quot;)
+for nb in [5, 10, 20, 50, 100, 200]
+    dom_nb = ContinuousDomain(L, U, nb)
+    η, ε, λe = adjunction_errors(cc_fn, dom_nb)
+    println(&quot;  $(lpad(nb, 5)) │ $(lpad(round(η, sigdigits=2), 11)) │ $(lpad(round(ε, sigdigits=2), 11)) │ $(lpad(round(λe, sigdigits=2), 10))&quot;)
+end
+
+println()
+println(&quot;Unit η ≈ 0:  midpoint rule is self-consistent under round-trip&quot;)
+println(&quot;Counit ε → 0: piecewise IPM converges to original as bins refine&quot;)</code></pre><h2 id="Stratification:-Spatial-Extension"><a class="docs-heading-anchor" href="#Stratification:-Spatial-Extension">Stratification: Spatial Extension</a><a id="Stratification:-Spatial-Extension-1"></a><a class="docs-heading-anchor-permalink" href="#Stratification:-Spatial-Extension" title="Permalink"></a></h2><p><strong>Stratification</strong> extends a single-patch model to multiple spatial patches. In the categorical framework, this is a <strong>pullback</strong> in a slice category: local demography is replicated across patches and weighted by dispersal probabilities.</p><pre><code class="language-julia hljs"># Materialise the control CC block
+K_cc_ctrl = materialize(PKernel(
+    CustomVitalRate(z -&gt; survival(z, ctrl)),
+    CustomVitalRate((z_prime, z) -&gt; growth(z_prime, z, ctrl)),
+    ht_domain
+))
+
+# Symmetric 2-patch dispersal: 90% stay, 10% move
+D_sym = [0.9 0.1; 0.1 0.9]
+K_strat_sym = stratify(K_cc_ctrl, D_sym)
+λ_strat_sym = maximum(real.(eigvals(K_strat_sym)))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.9932267862183837</code></pre><pre><code class="language- hljs">println(&quot;Symmetric dispersal (90% stay, 10% move):&quot;)
+println(&quot;  Single-patch λ = &quot;, round(λ_ref, digits=6))
+println(&quot;  Two-patch λ    = &quot;, round(λ_strat_sym, digits=6))
+println(&quot;  Ratio: &quot;, round(λ_strat_sym / λ_ref, digits=6),
+    &quot;  (≈ 1.0 for identical patches)&quot;)</code></pre><pre><code class="language-julia hljs"># Asymmetric dispersal: source-sink dynamics
+D_asym = [0.95 0.20; 0.05 0.80]
+K_strat_asym = stratify(K_cc_ctrl, D_asym)
+λ_strat_asym = maximum(real.(eigvals(K_strat_asym)))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.9932267862183823</code></pre><pre><code class="language-julia hljs">println(&quot;Asymmetric dispersal (source-sink):&quot;)
+println(&quot;  Two-patch λ = &quot;, round(λ_strat_asym, digits=6))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Asymmetric dispersal (source-sink):
+  Two-patch λ = 0.993227</code></pre><h2 id="Coarsening-via-Pushforward"><a class="docs-heading-anchor" href="#Coarsening-via-Pushforward">Coarsening via Pushforward</a><a id="Coarsening-via-Pushforward-1"></a><a class="docs-heading-anchor-permalink" href="#Coarsening-via-Pushforward" title="Permalink"></a></h2><p>Given a fine discretisation, <strong>coarsening</strong> aggregates bins to produce a lower-resolution matrix. This is the pushforward (left Kan extension) along a coarsening map.</p><pre><code class="language- hljs"># Fine: 100 bins, coarse: 20 bins
+fine_domain = ContinuousDomain(L, U, 100)
+coarse_domain = ContinuousDomain(L, U, 20)
+
+A_fine = left_kan_extension(cc_fn, fine_domain)
+λ_fine = maximum(real.(eigvals(A_fine)))
+
+# Coarsen via domain-based pushforward
+A_coarsened = coarsen(A_fine, fine_domain, coarse_domain)
+λ_coarsened = maximum(real.(eigvals(A_coarsened)))
+
+# Direct discretisation at n=20
+A_direct_20 = left_kan_extension(cc_fn, coarse_domain)
+λ_direct_20 = maximum(real.(eigvals(A_direct_20)))</code></pre><pre><code class="language- hljs">println(&quot;Fine (n=100):              λ = &quot;, round(λ_fine, digits=6))
+println(&quot;Coarsened via Lan (n=20):  λ = &quot;, round(λ_coarsened, digits=6))
+println(&quot;Direct at n=20:            λ = &quot;, round(λ_direct_20, digits=6))
+println(&quot;Reference (n=500):         λ = &quot;, round(λ_ref, digits=6))</code></pre><h3 id="Coarsening-with-Catlab-FinFunction"><a class="docs-heading-anchor" href="#Coarsening-with-Catlab-FinFunction">Coarsening with Catlab FinFunction</a><a id="Coarsening-with-Catlab-FinFunction-1"></a><a class="docs-heading-anchor-permalink" href="#Coarsening-with-Catlab-FinFunction" title="Permalink"></a></h3><p>The same coarsening can be expressed categorically using a Catlab <code>FinFunction</code>:</p><pre><code class="language- hljs">n_fine = 100
+n_coarse = 20
+bins_per_coarse = n_fine ÷ n_coarse
+
+# Coarsening map: FinSet(100) → FinSet(20)
+coarsening_map = FinFunction(
+    [div(i - 1, bins_per_coarse) + 1 for i in 1:n_fine],
+    n_coarse
+)
+
+A_coarsened_ff = coarsen(A_fine, coarsening_map)</code></pre><pre><code class="language- hljs">println(&quot;Coarsened via FinFunction matches domain-based: &quot;,
+    isapprox(A_coarsened, A_coarsened_ff))</code></pre><h2 id="Functorial-Semantics"><a class="docs-heading-anchor" href="#Functorial-Semantics">Functorial Semantics</a><a id="Functorial-Semantics-1"></a><a class="docs-heading-anchor-permalink" href="#Functorial-Semantics" title="Permalink"></a></h2><p>The same abstract demographic model can be interpreted via different <strong>functors</strong> — each producing a different analysis from the same specification. This is &quot;one model, multiple analyses&quot;.</p><h3 id="F_det:-Deterministic-Projection"><a class="docs-heading-anchor" href="#F_det:-Deterministic-Projection">F_det: Deterministic Projection</a><a id="F_det:-Deterministic-Projection-1"></a><a class="docs-heading-anchor-permalink" href="#F_det:-Deterministic-Projection" title="Permalink"></a></h3><pre><code class="language- hljs"># Dominant eigenvalue and stable distribution
+idx = argmax(real.(e_ctrl.values))
+w = abs.(real.(e_ctrl.vectors[:, idx]))
+w ./= sum(w)
+
+println(&quot;F_det (deterministic projection):&quot;)
+println(&quot;  λ = &quot;, round(λ_ctrl, digits=4))
+println(&quot;  Population &quot;, λ_ctrl &gt; 1.0 ? &quot;growing&quot; : &quot;declining&quot;)
+
+# Find peak in height distribution (first n entries)
+w_ht = w[1:n]
+peak_idx = argmax(w_ht)
+println(&quot;  Stable height distribution peak at z ≈ &quot;, round(z[peak_idx], digits=1), &quot; cm&quot;)</code></pre><h3 id="F_sens:-Sensitivity-and-Elasticity"><a class="docs-heading-anchor" href="#F_sens:-Sensitivity-and-Elasticity">F_sens: Sensitivity and Elasticity</a><a id="F_sens:-Sensitivity-and-Elasticity-1"></a><a class="docs-heading-anchor-permalink" href="#F_sens:-Sensitivity-and-Elasticity" title="Permalink"></a></h3><pre><code class="language- hljs"># Sensitivity matrix
+e_ctrl_t = eigen(transpose(K_ctrl))
+idx_t = argmax(real.(e_ctrl_t.values))
+v = abs.(real.(e_ctrl_t.vectors[:, idx_t]))
+
+S = (v * w&#39;) / dot(v, w)
+E = (K_ctrl ./ λ_ctrl) .* S
+
+# Decompose elasticity by block
+n_ht = n
+n_b = 1
+E_CC = E[1:n_ht, 1:n_ht]
+E_CD = E[(n_ht+1):(n_ht+n_b), 1:n_ht]
+E_DC = E[1:n_ht, (n_ht+1):(n_ht+n_b)]
+E_DD = E[(n_ht+1):(n_ht+n_b), (n_ht+1):(n_ht+n_b)]</code></pre><pre><code class="language- hljs">println(&quot;F_sens (elasticity analysis):&quot;)
+println(&quot;  Total elasticity:  &quot;, round(sum(E), digits=4), &quot;  (should ≈ 1.0)&quot;)
+println(&quot;  CC (survive-grow): &quot;, round(sum(E_CC), digits=4),
+    &quot;  (&quot;, round(100*sum(E_CC), digits=1), &quot;%)&quot;)
+println(&quot;  CD (to seedbank):  &quot;, round(sum(E_CD), digits=4),
+    &quot;  (&quot;, round(100*sum(E_CD), digits=1), &quot;%)&quot;)
+println(&quot;  DC (from seedbank):&quot;, round(sum(E_DC), digits=4),
+    &quot;  (&quot;, round(100*sum(E_DC), digits=1), &quot;%)&quot;)
+println(&quot;  DD (stay in bank): &quot;, round(sum(E_DD), digits=4),
+    &quot;  (&quot;, round(100*sum(E_DD), digits=1), &quot;%)&quot;)</code></pre><h3 id="F_stoch:-Stochastic-Simulation"><a class="docs-heading-anchor" href="#F_stoch:-Stochastic-Simulation">F_stoch: Stochastic Simulation</a><a id="F_stoch:-Stochastic-Simulation-1"></a><a class="docs-heading-anchor-permalink" href="#F_stoch:-Stochastic-Simulation" title="Permalink"></a></h3><pre><code class="language- hljs"># Stochastic projection using the full mega-kernel
+n0 = vcat(uniform_population(ht_domain), [20.0])
+prob = IPMProblem(GeneralIPM(), mega_ctrl, (ht=ht_domain, b=b_domain),
+    n0, (0, 50))
+sol = solve(prob)
+
+# Per-step growth rates
+mean_λ = exp(mean(log.(sol.lambdas[5:end])))</code></pre><pre><code class="language- hljs">println(&quot;F_stoch (stochastic projection):&quot;)
+println(&quot;  Geometric mean λ (after burn-in) = &quot;, round(mean_λ, digits=4))
+println(&quot;  Asymptotic λ                     = &quot;, round(λ_ctrl, digits=4))</code></pre><h2 id="Commutation:-Discretise-then-Stratify-Stratify-then-Discretise"><a class="docs-heading-anchor" href="#Commutation:-Discretise-then-Stratify-Stratify-then-Discretise">Commutation: Discretise then Stratify = Stratify then Discretise</a><a id="Commutation:-Discretise-then-Stratify-Stratify-then-Discretise-1"></a><a class="docs-heading-anchor-permalink" href="#Commutation:-Discretise-then-Stratify-Stratify-then-Discretise" title="Permalink"></a></h2><p>Because the Kan extension is functorial, it commutes with stratification:</p><pre><code class="language- hljs">n_comm = 50
+dom_comm = ContinuousDomain(L, U, n_comm)
+
+# Path 1: discretise first, then stratify
+A_p1_local = left_kan_extension(cc_fn, dom_comm)
+A_path1 = stratify(A_p1_local, D_sym)
+
+# Path 2: stratify the continuous kernel, then discretise
+z_comm = meshpoints(dom_comm)
+h_comm = step_size(dom_comm)
+n_patches = 2
+n_total = n_comm * n_patches
+A_path2 = zeros(n_total, n_total)
+for p_from in 1:n_patches, p_to in 1:n_patches
+    for j in 1:n_comm, i in 1:n_comm
+        row = (p_to - 1) * n_comm + i
+        col = (p_from - 1) * n_comm + j
+        A_path2[row, col] = h_comm * D_sym[p_to, p_from] * cc_fn(z_comm[i], z_comm[j])
+    end
+end
+
+comm_error = norm(A_path1 - A_path2) / norm(A_path1)</code></pre><pre><code class="language- hljs">println(&quot;Commutation: ||Path1 - Path2|| / ||Path1|| = &quot;, round(comm_error, sigdigits=2))
+println(&quot;Commutes: &quot;, comm_error &lt; 1e-12)</code></pre><h2 id="Summary-of-Categorical-Constructions"><a class="docs-heading-anchor" href="#Summary-of-Categorical-Constructions">Summary of Categorical Constructions</a><a id="Summary-of-Categorical-Constructions-1"></a><a class="docs-heading-anchor-permalink" href="#Summary-of-Categorical-Constructions" title="Permalink"></a></h2><table><tr><th style="text-align: right">Construction</th><th style="text-align: right">Category theory</th><th style="text-align: right">Function</th><th style="text-align: right">What it does</th></tr><tr><td style="text-align: right">Kernel composition</td><td style="text-align: right">Operadic algebra (UWD)</td><td style="text-align: right"><code>compose_from_uwd</code> / <code>compose_kernels</code></td><td style="text-align: right">Sum sub-kernels sharing trait axes</td></tr><tr><td style="text-align: right">IPM → MPM</td><td style="text-align: right">Left Kan extension</td><td style="text-align: right"><code>left_kan_extension</code></td><td style="text-align: right">Discretise kernel → matrix</td></tr><tr><td style="text-align: right">MPM → IPM</td><td style="text-align: right">Right Kan extension</td><td style="text-align: right"><code>right_kan_extension</code></td><td style="text-align: right">Matrix → piecewise kernel</td></tr><tr><td style="text-align: right">Spatial model</td><td style="text-align: right">Pullback (stratification)</td><td style="text-align: right"><code>stratify</code></td><td style="text-align: right">Local dynamics + dispersal</td></tr><tr><td style="text-align: right">Bin aggregation</td><td style="text-align: right">Pushforward</td><td style="text-align: right"><code>coarsen</code></td><td style="text-align: right">Fine → coarse matrix</td></tr><tr><td style="text-align: right">Multiple analyses</td><td style="text-align: right">Functorial semantics</td><td style="text-align: right"><code>solve</code>, <code>sensitivity</code>, ...</td><td style="text-align: right">One model, many outputs</td></tr></table><p>The <code>IntegralProjectionModels.categorical</code> module provides these operations without requiring Catlab. When Catlab is loaded, the extension adds UWD evaluation (<code>compose_from_uwd</code>) and <code>FinFunction</code>-based coarsening.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../08_age_size/">« Age x Size IPM</a><a class="docs-footer-nextpage" href="../10_padrino/">PADRINO Database Integration »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 8 June 2026 23:57">Monday 8 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

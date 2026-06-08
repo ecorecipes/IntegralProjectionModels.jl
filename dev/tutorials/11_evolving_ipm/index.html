@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Evolving IPMs: Evolutionary Demography · IntegralProjectionModels.jl</title><meta name="title" content="Evolving IPMs: Evolutionary Demography · IntegralProjectionModels.jl"/><meta property="og:title" content="Evolving IPMs: Evolutionary Demography · IntegralProjectionModels.jl"/><meta property="twitter:title" content="Evolving IPMs: Evolutionary Demography · IntegralProjectionModels.jl"/><meta name="description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="twitter:description" content="Documentation for IntegralProjectionModels.jl."/><meta property="og:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/11_evolving_ipm/"/><meta property="twitter:url" content="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/11_evolving_ipm/"/><link rel="canonical" href="https://ecorecipes.github.io/IntegralProjectionModels.jl/tutorials/11_evolving_ipm/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">IntegralProjectionModels.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../01_introduction/">Introduction to Integral Projection Models</a></li><li><a class="tocitem" href="../02_ungulate/">Ungulate IPM: Soay Sheep</a></li><li><a class="tocitem" href="../03_eviction/">Eviction Correction</a></li><li><a class="tocitem" href="../04_sensitivity_elasticity/">Sensitivity and Elasticity Analysis</a></li><li><a class="tocitem" href="../05_density_dependent/">Density-Dependent IPMs</a></li><li><a class="tocitem" href="../06_stochastic/">Stochastic IPMs</a></li><li><a class="tocitem" href="../07_general_ipm/">General IPM with Seed Bank</a></li><li><a class="tocitem" href="../08_age_size/">Age x Size IPM</a></li><li><a class="tocitem" href="../09_categorical/">Categorical Composition of IPMs</a></li><li><a class="tocitem" href="../10_padrino/">PADRINO Database Integration</a></li><li class="is-active"><a class="tocitem" href>Evolving IPMs: Evolutionary Demography</a><ul class="internal"><li><a class="tocitem" href="#Overview"><span>Overview</span></a></li><li><a class="tocitem" href="#Setup"><span>Setup</span></a></li><li><a class="tocitem" href="#Model-Parameters"><span>Model Parameters</span></a></li><li><a class="tocitem" href="#Vital-Rate-Functions"><span>Vital Rate Functions</span></a></li><li><a class="tocitem" href="#Part-1:-Building-the-1D-IPM"><span>Part 1: Building the 1D IPM</span></a></li><li><a class="tocitem" href="#Part-2:-Fitness-Landscapes-and-ESS"><span>Part 2: Fitness Landscapes and ESS</span></a></li><li><a class="tocitem" href="#Part-3:-Two-Dimensional-Evolving-IPM"><span>Part 3: Two-Dimensional Evolving IPM</span></a></li><li><a class="tocitem" href="#Part-4:-Evolutionary-Dynamics"><span>Part 4: Evolutionary Dynamics</span></a></li><li><a class="tocitem" href="#Part-5:-Selection-Analysis"><span>Part 5: Selection Analysis</span></a></li><li><a class="tocitem" href="#Part-6:-Approximating-Evolutionary-Dynamics"><span>Part 6: Approximating Evolutionary Dynamics</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../12_time_lag/">Time-Lagged Integral Projection Models</a></li><li><a class="tocitem" href="../13_diagnostics/">Spectral Diagnostics and Type Hierarchy</a></li><li><a class="tocitem" href="../14_kernels_and_helpers/">Kernel Composition and Helpers</a></li><li><a class="tocitem" href="../15_padrino_validation/">PADRINO Validation: Test Targets and λ Reproducibility</a></li><li><a class="tocitem" href="../16_lag_metrics/">Time-Lag Metrics: Augmentation, R0, and Generation Time</a></li><li><a class="tocitem" href="../17_ipm_mpm_bridge/">IPM ↔ MPM Discretization Bridge</a></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../api/domains/">Domains</a></li><li><a class="tocitem" href="../../api/vital_rates/">Vital Rates</a></li><li><a class="tocitem" href="../../api/kernels/">Kernels</a></li><li><a class="tocitem" href="../../api/types/">Types &amp; Traits</a></li><li><a class="tocitem" href="../../api/problems/">Problem &amp; Solution</a></li><li><a class="tocitem" href="../../api/analysis/">Analysis</a></li><li><a class="tocitem" href="../../api/time_lag/">Time-Lag Models</a></li><li><a class="tocitem" href="../../api/age_size/">Age×Size Models</a></li><li><a class="tocitem" href="../../api/categorical/">Categorical Composition</a></li><li><a class="tocitem" href="../../api/sciml/">SciML Interface</a></li><li><a class="tocitem" href="../../api/utilities/">Utilities</a></li><li><a class="tocitem" href="../../api/padrino/">PADRINO Integration</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Evolving IPMs: Evolutionary Demography</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Evolving IPMs: Evolutionary Demography</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ecorecipes/IntegralProjectionModels.jl/blob/main/docs/src/tutorials/11_evolving_ipm.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Evolving-IPMs:-Evolutionary-Demography"><a class="docs-heading-anchor" href="#Evolving-IPMs:-Evolutionary-Demography">Evolving IPMs: Evolutionary Demography</a><a id="Evolving-IPMs:-Evolutionary-Demography-1"></a><a class="docs-heading-anchor-permalink" href="#Evolving-IPMs:-Evolutionary-Demography" title="Permalink"></a></h1><h2 id="Overview"><a class="docs-heading-anchor" href="#Overview">Overview</a><a id="Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Overview" title="Permalink"></a></h2><p>This vignette implements the <strong>evolving integral projection model</strong> from Rees &amp; Ellner (2016, <em>Methods in Ecology and Evolution</em>), which links demography with evolution. The key idea is to track a heritable trait — the flowering intercept <span>$\beta_0$</span> — alongside body size <span>$z$</span> in a two-dimensional IPM.</p><p>The model is based on the monocarpic perennial <em>Oenothera glazioviana</em> (evening primrose), where:</p><ul><li>Plants grow vegetatively, then flower once and die</li><li>The probability of flowering depends on size and genotype: <span>$\text{logit}(p_b) = \beta_0 + \beta_1 z$</span></li><li>The flowering intercept <span>$\beta_0$</span> is heritable with Gaussian mutation</li><li>Density dependence operates through a fixed number of recruits per year</li></ul><p>We cover:</p><ol><li><strong>Fitness landscapes</strong>: <span>$\lambda(\beta_0)$</span> as a function of the flowering strategy</li><li><strong>Evolutionarily Stable Strategies (ESS)</strong>: finding the uninvadable flowering strategy</li><li><strong>2D IPM dynamics</strong>: joint size <span>$\times$</span> genotype projection</li><li><strong>Evolutionary trajectories</strong>: mean and variance of <span>$\beta_0$</span> over time</li><li><strong>Selection decomposition</strong>: survival vs. recruitment components</li></ol><h2 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h2><pre><code class="language-julia hljs">using IntegralProjectionModels
+using Distributions
+using LinearAlgebra
+using Plots</code></pre><h2 id="Model-Parameters"><a class="docs-heading-anchor" href="#Model-Parameters">Model Parameters</a><a id="Model-Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Model-Parameters" title="Permalink"></a></h2><p>Parameters from Kachi &amp; Hirose (1985) and Rees &amp; Rose (2002). Size is on a log scale.</p><pre><code class="language-julia hljs"># Survival (logistic regression)
+surv_int = -0.65
+surv_z = 0.75
+
+# Flowering probability (logistic regression)
+flow_int = -18.0    # default value — the evolving trait
+flow_z = 6.9
+
+# Growth (normal distribution)
+grow_int = 0.96
+grow_z = 0.59
+grow_sd = 0.67
+
+# Recruit size distribution
+rcsz_int = -0.08
+rcsz_sd = 0.76
+
+# Seed production (log-linear)
+seed_int = 1.0
+seed_z = 2.2
+
+# Establishment probability
+p_r = 0.007</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.007</code></pre><h2 id="Vital-Rate-Functions"><a class="docs-heading-anchor" href="#Vital-Rate-Functions">Vital Rate Functions</a><a id="Vital-Rate-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Vital-Rate-Functions" title="Permalink"></a></h2><pre><code class="language-julia hljs">s_z(z) = 1.0 / (1.0 + exp(-(surv_int + surv_z * z)))
+p_bz(z, β₀) = 1.0 / (1.0 + exp(-(β₀ + flow_z * z)))
+G_z1z(z_prime, z) = pdf(Normal(grow_int + grow_z * z, grow_sd), z_prime)
+b_z(z) = exp(seed_int + seed_z * z)
+c_0z1(z_prime) = pdf(Normal(rcsz_int, rcsz_sd), z_prime)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">c_0z1 (generic function with 1 method)</code></pre><p>The survival kernel <span>$P$</span> and fecundity kernel <span>$F$</span> are:</p><p>$</p><p>P(z&#39;, z; \beta<em>0) = (1 - p</em>b(z, \beta_0)) \cdot s(z) \cdot G(z&#39;|z) $</p><p>$</p><p>F(z&#39;, z; \beta<em>0) = p</em>b(z, \beta<em>0) \cdot b(z) \cdot p</em>r \cdot c_0(z&#39;) $</p><p>Note that flowering is fatal in monocarps — only non-flowering plants enter the P kernel.</p><pre><code class="language-julia hljs">P_z1z(z_prime, z, β₀) = (1.0 - p_bz(z, β₀)) * s_z(z) * G_z1z(z_prime, z)
+F_z1z(z_prime, z, β₀) = p_bz(z, β₀) * b_z(z) * p_r * c_0z1(z_prime)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">F_z1z (generic function with 1 method)</code></pre><h2 id="Part-1:-Building-the-1D-IPM"><a class="docs-heading-anchor" href="#Part-1:-Building-the-1D-IPM">Part 1: Building the 1D IPM</a><a id="Part-1:-Building-the-1D-IPM-1"></a><a class="docs-heading-anchor-permalink" href="#Part-1:-Building-the-1D-IPM" title="Permalink"></a></h2><p>First, we build the standard 1D IPM for a fixed genotype <span>$\beta_0$</span>.</p><pre><code class="language-julia hljs">L_z = -5.5
+U_z = 6.5
+n_z = 100
+
+domain_z = ContinuousDomain(L_z, U_z, n_z)
+z = meshpoints(domain_z)
+h_z = step_size(domain_z)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.12</code></pre><pre><code class="language-julia hljs">&quot;&quot;&quot;
+Build the 1D kernel matrix for a given flowering intercept β₀
+and recruitment probability p_r.
+&quot;&quot;&quot;
+function build_kernel(z, h_z, β₀, pr)
+    m = length(z)
+    P = zeros(m, m)
+    F = zeros(m, m)
+    for j in 1:m, i in 1:m
+        P[i, j] = h_z * P_z1z(z[i], z[j], β₀)
+        F[i, j] = h_z * F_z1z(z[i], z[j], β₀)
+    end
+    # Replace p_r with the provided value
+    if pr != p_r
+        F .*= pr / p_r
+    end
+    return P, F, P + F
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.build_kernel</code></pre><pre><code class="language-julia hljs">P_mat, F_mat, K_mat = build_kernel(z, h_z, flow_int, p_r)
+λ_default = real(eigvals(K_mat)[end])
+println(&quot;λ with default β₀ = $flow_int: &quot;, round(λ_default, digits=4))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">λ with default β₀ = -18.0: 1.0687</code></pre><h2 id="Part-2:-Fitness-Landscapes-and-ESS"><a class="docs-heading-anchor" href="#Part-2:-Fitness-Landscapes-and-ESS">Part 2: Fitness Landscapes and ESS</a><a id="Part-2:-Fitness-Landscapes-and-ESS-1"></a><a class="docs-heading-anchor-permalink" href="#Part-2:-Fitness-Landscapes-and-ESS" title="Permalink"></a></h2><h3 id="\\lambda-as-a-function-of-\\beta_0"><a class="docs-heading-anchor" href="#\\lambda-as-a-function-of-\\beta_0"><span>$\lambda$</span> as a function of <span>$\beta_0$</span></a><a id="\\lambda-as-a-function-of-\\beta_0-1"></a><a class="docs-heading-anchor-permalink" href="#\\lambda-as-a-function-of-\\beta_0" title="Permalink"></a></h3><p>For an evolving trait, we need to find the flowering strategy that maximizes fitness. With density dependence through a fixed number of recruits, the resident population is at equilibrium when <span>$\lambda = 1$</span>. This is achieved by adjusting <span>$p_r$</span> to make <span>$R_0 = 1$</span>.</p><pre><code class="language-julia hljs">&quot;&quot;&quot;
+Compute R₀ for a given parameter set by finding the dominant eigenvalue
+of the next-generation matrix F × N, where N = (I - P)⁻¹.
+&quot;&quot;&quot;
+function compute_R0(z, h_z, β₀, pr)
+    P, F, _ = build_kernel(z, h_z, β₀, pr)
+    N = inv(I - P)  # fundamental matrix
+    R = F * N
+    return real(eigvals(R)[end])
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.compute_R0</code></pre><pre><code class="language-julia hljs">&quot;&quot;&quot;
+Find the equilibrium p_r such that λ = 1 for the resident strategy β₀.
+This is p_r = 1/R₀(p_r=1).
+&quot;&quot;&quot;
+function equilibrium_pr(z, h_z, β₀)
+    R0 = compute_R0(z, h_z, β₀, 1.0)
+    return 1.0 / R0
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.equilibrium_pr</code></pre><pre><code class="language-julia hljs">&quot;&quot;&quot;
+Compute λ for an invader with strategy β₀_inv in a resident
+population with strategy β₀_res (at equilibrium).
+&quot;&quot;&quot;
+function invader_lambda(z, h_z, β₀_inv, β₀_res)
+    pr_eq = equilibrium_pr(z, h_z, β₀_res)
+    _, _, K = build_kernel(z, h_z, β₀_inv, pr_eq)
+    return real(eigvals(K)[end])
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.invader_lambda</code></pre><p>The <strong>fitness landscape</strong> shows <span>$\lambda$</span> as a function of <span>$\beta_0$</span> for three different resident strategies:</p><pre><code class="language-julia hljs">β₀_range = range(-30, -20, length=50)
+residents = [-30.0, -25.0, -20.0]
+colors = [:turquoise, :red, :blue]
+
+plt_fitness = plot(xlabel=&quot;β₀&quot;, ylabel=&quot;λ&quot;,
+    title=&quot;Fitness landscapes&quot;, legend=:topright)
+
+for (i, β₀_res) in enumerate(residents)
+    λs = [invader_lambda(z, h_z, β₀_inv, β₀_res) for β₀_inv in β₀_range]
+    plot!(β₀_range, λs, label=&quot;Resident β₀ = $(Int(β₀_res))&quot;,
+        color=colors[i], linewidth=2)
+end
+hline!([1.0], color=:black, linestyle=:dash, label=false)
+plt_fitness</code></pre><img src="858d87bf.svg" alt="Example block output"/><h3 id="Finding-the-ESS"><a class="docs-heading-anchor" href="#Finding-the-ESS">Finding the ESS</a><a id="Finding-the-ESS-1"></a><a class="docs-heading-anchor-permalink" href="#Finding-the-ESS" title="Permalink"></a></h3><p>The ESS is the strategy that cannot be invaded by any mutant. We find it iteratively: starting from a resident, find the best invader, make it the new resident, and repeat.</p><pre><code class="language-julia hljs">&quot;&quot;&quot;
+Find the ESS flowering intercept by iterative invasion.
+&quot;&quot;&quot;
+function find_ESS(z, h_z; tol=1e-6, max_iter=50)
+    β₀_res = flow_int  # start from default
+    for iter in 1:max_iter
+        # Find best invader
+        result = optimize_beta(z, h_z, β₀_res)
+        β₀_opt, λ_opt = result
+
+        if abs(λ_opt - 1.0) &lt; tol
+            return β₀_opt
+        end
+        β₀_res = β₀_opt
+    end
+    return β₀_res
+end
+
+&quot;&quot;&quot;
+Find the β₀ that maximizes invader λ against a given resident.
+Golden section search on [-30, -15].
+&quot;&quot;&quot;
+function optimize_beta(z, h_z, β₀_res)
+    # Simple grid search + refinement
+    best_β = -25.0
+    best_λ = -Inf
+    for β in range(-30, -15, length=100)
+        λ = invader_lambda(z, h_z, β, β₀_res)
+        if λ &gt; best_λ
+            best_λ = λ
+            best_β = β
+        end
+    end
+    # Refine with finer grid
+    for β in range(best_β - 0.5, best_β + 0.5, length=100)
+        λ = invader_lambda(z, h_z, β, β₀_res)
+        if λ &gt; best_λ
+            best_λ = λ
+            best_β = β
+        end
+    end
+    return best_β, best_λ
+end
+
+β₀_ESS = find_ESS(z, h_z)
+println(&quot;ESS flowering intercept: &quot;, round(β₀_ESS, digits=2))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">ESS flowering intercept: -24.92</code></pre><p>The ESS should be approximately <span>$\beta_0 \approx -24.9$</span>, matching Rees &amp; Ellner (2016).</p><h3 id="Pairwise-Invasibility-Plot-(PIP)"><a class="docs-heading-anchor" href="#Pairwise-Invasibility-Plot-(PIP)">Pairwise Invasibility Plot (PIP)</a><a id="Pairwise-Invasibility-Plot-(PIP)-1"></a><a class="docs-heading-anchor-permalink" href="#Pairwise-Invasibility-Plot-(PIP)" title="Permalink"></a></h3><p>The PIP shows which invader strategies can invade which resident strategies. Regions where <span>$\lambda &gt; 1$</span> indicate successful invasion.</p><pre><code class="language-julia hljs">n_pip = 100
+β_pip = range(-30, -20, length=n_pip)
+pip_matrix = zeros(n_pip, n_pip)
+
+for (i, β_res) in enumerate(β_pip)
+    pr_eq = equilibrium_pr(z, h_z, β_res)
+    for (j, β_inv) in enumerate(β_pip)
+        _, _, K = build_kernel(z, h_z, β_inv, pr_eq)
+        pip_matrix[j, i] = real(eigvals(K)[end])
+    end
+end</code></pre><pre><code class="language-julia hljs">heatmap(collect(β_pip), collect(β_pip), pip_matrix .&gt; 1.0,
+    xlabel=&quot;Resident β₀&quot;,
+    ylabel=&quot;Invader β₀&quot;,
+    title=&quot;Pairwise Invasibility Plot (PIP)&quot;,
+    color=[:white, :lightblue],
+    colorbar=false)
+plot!([β₀_ESS, β₀_ESS], [-30, -20], color=:red, linestyle=:dash, label=&quot;ESS&quot;, linewidth=2)
+plot!([-30, -20], [-30, -20], color=:black, linestyle=:dot, label=false)</code></pre><img src="1cbe664e.svg" alt="Example block output"/><p>The PIP shows that the ESS lies at the intersection of the diagonal with the boundary between invasible and non-invasible regions.</p><h2 id="Part-3:-Two-Dimensional-Evolving-IPM"><a class="docs-heading-anchor" href="#Part-3:-Two-Dimensional-Evolving-IPM">Part 3: Two-Dimensional Evolving IPM</a><a id="Part-3:-Two-Dimensional-Evolving-IPM-1"></a><a class="docs-heading-anchor-permalink" href="#Part-3:-Two-Dimensional-Evolving-IPM" title="Permalink"></a></h2><p>The 2D IPM tracks the joint distribution <span>$n(z, \beta_0, t)$</span> of body size and flowering genotype. The iteration follows Rees &amp; Ellner (2016, eqn 6):</p><p>$</p><p>n(z&#39;, \beta<em>0, t+1) = \underbrace{P(z&#39;, z; \beta</em>0) \otimes n(z, \beta<em>0, t)}</em>{\text{survivors}}</p><ul><li>\underbrace{R<em>{c0}(z&#39;) \cdot \frac{\int M(\beta</em>0, \beta<em>0^p) S(\beta</em>0^p) \, d\beta<em>0^p}{\int S(\beta</em>0) \, d\beta<em>0}}</em>{\text{recruits}}</li></ul><p>$</p><p>where <span>$S(\beta_0) = \int p_b(z, \beta_0) \, b(z) \, n(z, \beta_0, t) \, dz$</span> is total seed production by genotype <span>$\beta_0$</span>, and <span>$M(\beta_0, \beta_0^p)$</span> is the Gaussian inheritance kernel.</p><h3 id="Setup-the-genotype-dimension"><a class="docs-heading-anchor" href="#Setup-the-genotype-dimension">Setup the genotype dimension</a><a id="Setup-the-genotype-dimension-1"></a><a class="docs-heading-anchor-permalink" href="#Setup-the-genotype-dimension" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Simulation parameters
+n_beta = 100
+n_yrs = 500
+init_pop_size = 10000
+Recr = 7500            # fixed number of recruits per year
+beta_off_sd = 0.5      # mutation standard deviation
+init_beta_sd = 0.7     # initial genetic standard deviation</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.7</code></pre><pre><code class="language-julia hljs">&quot;&quot;&quot;
+Run the 2D evolving IPM for a given initial mean flowering intercept.
+Returns time series of mean and variance of β₀, plus the final state.
+&quot;&quot;&quot;
+function iterate_2d_ipm(z, h_z, init_beta_mean;
+        n_beta=100, n_yrs=500, init_pop_size=10000,
+        Recr=7500, beta_off_sd=0.5, init_beta_sd=0.7)
+
+    n_z = length(z)
+
+    # Set up beta domain based on initial mean
+    if init_beta_mean &gt;= -25
+        L_beta, U_beta = -30.0, -10.0
+    else
+        L_beta, U_beta = -40.0, -20.0
+    end
+    h_beta = (U_beta - L_beta) / n_beta
+    beta = L_beta .+ ((1:n_beta) .- 0.5) .* h_beta
+
+    # Initial joint distribution: product of size × genotype Gaussians
+    z_dist = pdf.(Normal(2.9, rcsz_sd), z)
+    beta_dist = pdf.(Normal(init_beta_mean, init_beta_sd), beta)
+    nt = init_pop_size .* (z_dist * beta_dist&#39;)  # n_z × n_beta matrix
+
+    # Precompute P kernels and seed production for each β₀
+    P_beta = Array{Float64}(undef, n_z, n_z, n_beta)
+    Seeds_beta = Array{Float64}(undef, n_z, n_beta)
+
+    for k in 1:n_beta
+        for j in 1:n_z, i in 1:n_z
+            P_beta[i, j, k] = h_z * P_z1z(z[i], z[j], beta[k])
+        end
+        for j in 1:n_z
+            Seeds_beta[j, k] = p_bz(z[j], beta[k]) * b_z(z[j])
+        end
+    end
+
+    # Inheritance kernel: M[i, j] = probability of β₀[i] offspring from β₀[j] parent
+    M = zeros(n_beta, n_beta)
+    for j in 1:n_beta, i in 1:n_beta
+        M[i, j] = pdf(Normal(beta[j], beta_off_sd), beta[i])
+    end
+
+    # Offspring size distribution
+    off_pdf = c_0z1.(z)
+
+    # Storage for tracking
+    mean_beta = zeros(n_yrs)
+    var_beta = zeros(n_yrs)
+
+    # Initial moments
+    beta_freq = vec(sum(nt, dims=1))
+    beta_freq ./= sum(beta_freq)
+    mean_beta[1] = dot(beta_freq, beta)
+    var_beta[1] = dot(beta_freq, (beta .- mean_beta[1]).^2)
+
+    # Iterate the model
+    for gen in 2:n_yrs
+        # Seeds produced by β₀[k] plants
+        seeds_from_k = zeros(n_beta)
+        for k in 1:n_beta
+            seeds_from_k[k] = h_z * dot(Seeds_beta[:, k], nt[:, k])
+        end
+
+        # Redistribute seeds according to inheritance kernel
+        seeds_with_k = h_beta .* (M * seeds_from_k)
+        total_seeds = sum(seeds_from_k)
+
+        # Fraction of recruits with each genotype
+        f_recruits_k = seeds_with_k ./ total_seeds
+
+        # New population: survivors + recruits
+        nt_new = similar(nt)
+        for k in 1:n_beta
+            # Survivors: P kernel applied to current size distribution for this genotype
+            survivors = P_beta[:, :, k] * nt[:, k]
+            # Recruits: fixed total × offspring size dist × genotype fraction
+            recruits = Recr .* off_pdf .* f_recruits_k[k]
+            nt_new[:, k] = survivors .+ recruits
+        end
+        nt = nt_new
+
+        # Track genotype distribution
+        beta_freq = vec(sum(nt, dims=1))
+        beta_freq ./= sum(beta_freq)
+        mean_beta[gen] = dot(beta_freq, beta)
+        var_beta[gen] = dot(beta_freq, (beta .- mean_beta[gen]).^2)
+    end
+
+    return (; mean_beta, var_beta, beta, nt)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.iterate_2d_ipm</code></pre><h3 id="Run-the-2D-IPM"><a class="docs-heading-anchor" href="#Run-the-2D-IPM">Run the 2D IPM</a><a id="Run-the-2D-IPM-1"></a><a class="docs-heading-anchor-permalink" href="#Run-the-2D-IPM" title="Permalink"></a></h3><p>We run from two starting points: <span>$\bar{\beta}_0 = -20$</span> and <span>$\bar{\beta}_0 = -30$</span>, following Fig. 2 of Rees &amp; Ellner (2016).</p><pre><code class="language-julia hljs">sol_minus20 = iterate_2d_ipm(z, h_z, -20.0;
+    n_beta=n_beta, n_yrs=n_yrs,
+    Recr=Recr, beta_off_sd=beta_off_sd, init_beta_sd=init_beta_sd)
+
+sol_minus30 = iterate_2d_ipm(z, h_z, -30.0;
+    n_beta=n_beta, n_yrs=n_yrs,
+    Recr=Recr, beta_off_sd=beta_off_sd, init_beta_sd=init_beta_sd)
+
+println(&quot;Final mean β₀ (start -20): &quot;, round(sol_minus20.mean_beta[end], digits=2))
+println(&quot;Final mean β₀ (start -30): &quot;, round(sol_minus30.mean_beta[end], digits=2))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Final mean β₀ (start -20): -24.83
+Final mean β₀ (start -30): -24.92</code></pre><h2 id="Part-4:-Evolutionary-Dynamics"><a class="docs-heading-anchor" href="#Part-4:-Evolutionary-Dynamics">Part 4: Evolutionary Dynamics</a><a id="Part-4:-Evolutionary-Dynamics-1"></a><a class="docs-heading-anchor-permalink" href="#Part-4:-Evolutionary-Dynamics" title="Permalink"></a></h2><h3 id="Mean-genotype-over-time"><a class="docs-heading-anchor" href="#Mean-genotype-over-time">Mean genotype over time</a><a id="Mean-genotype-over-time-1"></a><a class="docs-heading-anchor-permalink" href="#Mean-genotype-over-time" title="Permalink"></a></h3><p>Both populations should converge toward the ESS <span>$\beta_0 \approx -24.9$</span>.</p><pre><code class="language-julia hljs">p1 = plot(1:n_yrs, sol_minus20.mean_beta,
+    xlabel=&quot;Time&quot;, ylabel=&quot;Mean β₀&quot;,
+    title=&quot;(a) Mean flowering intercept&quot;,
+    label=&quot;Start β₀ = -20&quot;, color=:blue, linewidth=2)
+plot!(1:n_yrs, sol_minus30.mean_beta,
+    label=&quot;Start β₀ = -30&quot;, color=:turquoise, linewidth=2)
+hline!([β₀_ESS], color=:red, linestyle=:dash, label=&quot;ESS ≈ $(round(β₀_ESS, digits=1))&quot;)</code></pre><img src="f24436f4.svg" alt="Example block output"/><h3 id="Variance-of-genotype-over-time"><a class="docs-heading-anchor" href="#Variance-of-genotype-over-time">Variance of genotype over time</a><a id="Variance-of-genotype-over-time-1"></a><a class="docs-heading-anchor-permalink" href="#Variance-of-genotype-over-time" title="Permalink"></a></h3><p>The genetic variance initially increases (due to diversifying selection or mutation) and then converges to a mutation-selection balance.</p><pre><code class="language-julia hljs">p2 = plot(1:n_yrs, sol_minus20.var_beta,
+    xlabel=&quot;Time&quot;, ylabel=&quot;Var(β₀)&quot;,
+    title=&quot;(b) Genetic variance&quot;,
+    label=&quot;Start β₀ = -20&quot;, color=:blue, linewidth=2)
+plot!(1:n_yrs, sol_minus30.var_beta,
+    label=&quot;Start β₀ = -30&quot;, color=:turquoise, linewidth=2)</code></pre><img src="76a133f0.svg" alt="Example block output"/><pre><code class="language-julia hljs">plot(p1, p2, layout=(1, 2), size=(900, 400))</code></pre><img src="103ff0b4.svg" alt="Example block output"/><h3 id="Genotype-distribution-over-time"><a class="docs-heading-anchor" href="#Genotype-distribution-over-time">Genotype distribution over time</a><a id="Genotype-distribution-over-time-1"></a><a class="docs-heading-anchor-permalink" href="#Genotype-distribution-over-time" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Extract genotype distributions at key time points
+beta20 = sol_minus20.beta
+nt20 = sol_minus20.nt
+
+# Compute marginal genotype distributions at different times
+# (we need to re-run to capture intermediate states)
+function get_beta_distributions(z, h_z, init_beta_mean, times;
+        n_beta=100, n_yrs=500, init_pop_size=10000,
+        Recr=7500, beta_off_sd=0.5, init_beta_sd=0.7)
+
+    n_z = length(z)
+    if init_beta_mean &gt;= -25
+        L_beta, U_beta = -30.0, -10.0
+    else
+        L_beta, U_beta = -40.0, -20.0
+    end
+    h_beta = (U_beta - L_beta) / n_beta
+    beta = L_beta .+ ((1:n_beta) .- 0.5) .* h_beta
+
+    z_dist = pdf.(Normal(2.9, rcsz_sd), z)
+    beta_dist_init = pdf.(Normal(init_beta_mean, init_beta_sd), beta)
+    nt = init_pop_size .* (z_dist * beta_dist_init&#39;)
+
+    P_beta = Array{Float64}(undef, n_z, n_z, n_beta)
+    Seeds_beta = Array{Float64}(undef, n_z, n_beta)
+    for k in 1:n_beta
+        for j in 1:n_z, i in 1:n_z
+            P_beta[i, j, k] = h_z * P_z1z(z[i], z[j], beta[k])
+        end
+        for j in 1:n_z
+            Seeds_beta[j, k] = p_bz(z[j], beta[k]) * b_z(z[j])
+        end
+    end
+
+    M = zeros(n_beta, n_beta)
+    for j in 1:n_beta, i in 1:n_beta
+        M[i, j] = pdf(Normal(beta[j], beta_off_sd), beta[i])
+    end
+    off_pdf = c_0z1.(z)
+
+    stored = Dict{Int, Vector{Float64}}()
+    if 1 in times
+        freq = vec(sum(nt, dims=1))
+        stored[1] = freq ./ sum(freq)
+    end
+
+    for gen in 2:n_yrs
+        seeds_from_k = [h_z * dot(Seeds_beta[:, k], nt[:, k]) for k in 1:n_beta]
+        seeds_with_k = h_beta .* (M * seeds_from_k)
+        total_seeds = sum(seeds_from_k)
+        f_recruits_k = seeds_with_k ./ total_seeds
+
+        nt_new = similar(nt)
+        for k in 1:n_beta
+            nt_new[:, k] = P_beta[:, :, k] * nt[:, k] .+ Recr .* off_pdf .* f_recruits_k[k]
+        end
+        nt = nt_new
+
+        if gen in times
+            freq = vec(sum(nt, dims=1))
+            stored[gen] = freq ./ sum(freq)
+        end
+    end
+
+    return beta, stored
+end
+
+beta_pts, beta_dists = get_beta_distributions(z, h_z, -20.0, [1, 50, 500];
+    n_beta=n_beta, n_yrs=n_yrs, Recr=Recr,
+    beta_off_sd=beta_off_sd, init_beta_sd=init_beta_sd)
+
+plot(beta_pts, beta_dists[1], label=&quot;t = 0&quot;, linewidth=2,
+    xlabel=&quot;β₀&quot;, ylabel=&quot;Relative frequency&quot;,
+    title=&quot;Distribution of genotypes over time&quot;)
+plot!(beta_pts, beta_dists[50], label=&quot;t = 50&quot;, linewidth=2)
+plot!(beta_pts, beta_dists[500], label=&quot;t = 500&quot;, linewidth=2)</code></pre><img src="923dd7dc.svg" alt="Example block output"/><p>The genotype distribution shifts from the initial mean toward the ESS and narrows as it approaches mutation-selection balance.</p><h2 id="Part-5:-Selection-Analysis"><a class="docs-heading-anchor" href="#Part-5:-Selection-Analysis">Part 5: Selection Analysis</a><a id="Part-5:-Selection-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Part-5:-Selection-Analysis" title="Permalink"></a></h2><p>Selection can be decomposed into components acting through survival and through recruitment. The selection gradient <span>$\partial \lambda / \partial \beta_0$</span> tells us the direction and strength of selection on the flowering intercept.</p><pre><code class="language-julia hljs">&quot;&quot;&quot;
+Compute selection gradient dλ/dβ₀ by finite differences,
+and decompose into survival and fecundity components.
+&quot;&quot;&quot;
+function selection_gradient(z, h_z, β₀; δ=1e-5)
+    pr_eq = equilibrium_pr(z, h_z, β₀)
+
+    # Build kernels at β₀, β₀ ± δ
+    P0, F0, K0 = build_kernel(z, h_z, β₀, pr_eq)
+    Pp, Fp, Kp = build_kernel(z, h_z, β₀ + δ, pr_eq)
+    Pm, Fm, Km = build_kernel(z, h_z, β₀ - δ, pr_eq)
+
+    # Eigenvalues and stable distributions
+    λ0 = real(eigvals(K0)[end])
+    λp = real(eigvals(Kp)[end])
+    λm = real(eigvals(Km)[end])
+
+    dλ = (λp - λm) / (2δ)
+    d²λ = (λp - 2λ0 + λm) / (δ^2)
+
+    # Stable size distributions for decomposition
+    w0 = real(eigen(K0).vectors[:, end])
+    w0 ./= sum(w0)
+    wp = real(eigen(Kp).vectors[:, end])
+    wp ./= sum(wp)
+    wm = real(eigen(Km).vectors[:, end])
+    wm ./= sum(wm)
+
+    # Survival and fecundity components
+    W_surv = sum(P0 * w0)
+    W_surv_p = sum(Pp * wp)
+    W_surv_m = sum(Pm * wm)
+    dW_surv = (W_surv_p - W_surv_m) / (2δ)
+
+    W_fec = sum(F0 * w0)
+    W_fec_p = sum(Fp * wp)
+    W_fec_m = sum(Fm * wm)
+    dW_fec = (W_fec_p - W_fec_m) / (2δ)
+
+    return (; dλ, d²λ, dW_surv, dW_fec)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.selection_gradient</code></pre><h3 id="Selection-trajectories"><a class="docs-heading-anchor" href="#Selection-trajectories">Selection trajectories</a><a id="Selection-trajectories-1"></a><a class="docs-heading-anchor-permalink" href="#Selection-trajectories" title="Permalink"></a></h3><p>We compute the selection gradient at each time step along the evolutionary trajectory of the 2D IPM (using the mean <span>$\beta_0$</span> at each time).</p><pre><code class="language-julia hljs"># Compute selection components along the trajectory
+n_sel = min(n_yrs, 500)
+sel_total_20 = zeros(n_sel)
+sel_surv_20 = zeros(n_sel)
+sel_fec_20 = zeros(n_sel)
+
+for t in 1:n_sel
+    sg = selection_gradient(z, h_z, sol_minus20.mean_beta[t])
+    sel_total_20[t] = sg.dλ
+    sel_surv_20[t] = sg.dW_surv
+    sel_fec_20[t] = sg.dW_fec
+end</code></pre><pre><code class="language-julia hljs">plot(1:n_sel, sel_total_20, label=&quot;Total&quot;, color=:black, linewidth=2,
+    xlabel=&quot;Time&quot;, ylabel=&quot;Selection (dλ/dβ₀)&quot;,
+    title=&quot;Selection decomposition (start β₀ = -20)&quot;)
+plot!(1:n_sel, sel_surv_20, label=&quot;Survival&quot;, color=:red)
+plot!(1:n_sel, sel_fec_20, label=&quot;Recruitment&quot;, color=:turquoise)
+hline!([0.0], color=:gray, linestyle=:dash, label=false)</code></pre><img src="a6ae8beb.svg" alt="Example block output"/><p>Selection through survival is negative (flowering is fatal, so higher flowering probability reduces survival). Selection through recruitment is positive (more flowering means more seeds). The net selection drives <span>$\beta_0$</span> toward the ESS where the total selection gradient is zero.</p><h2 id="Part-6:-Approximating-Evolutionary-Dynamics"><a class="docs-heading-anchor" href="#Part-6:-Approximating-Evolutionary-Dynamics">Part 6: Approximating Evolutionary Dynamics</a><a id="Part-6:-Approximating-Evolutionary-Dynamics-1"></a><a class="docs-heading-anchor-permalink" href="#Part-6:-Approximating-Evolutionary-Dynamics" title="Permalink"></a></h2><p>The mean trait dynamics can be approximated without the full 2D IPM using the &quot;breeder&#39;s equation&quot; for IPMs (Iwasa, Pomiankowski &amp; Nee 1991; Rees &amp; Ellner 2016 eqn 18):</p><p>$</p><p>\Delta \bar{\beta}<em>0 = \sigma^2 \frac{W&#39;(\bar{\beta}</em>0)}{\bar{W}} $</p><p>where <span>$\sigma^2$</span> is the genetic variance, <span>$W(\beta_0) = \lambda(\beta_0)$</span> is the fitness function, and <span>$\bar{W} \approx 1$</span> at demographic equilibrium.</p><pre><code class="language-julia hljs">&quot;&quot;&quot;
+Approximate mean β₀ dynamics using the selection gradient and
+genetic variance from the 2D IPM.
+&quot;&quot;&quot;
+function approx_mean_dynamics(z, h_z, init_beta_mean, var_beta_series; n_yrs=500, δ=1e-5)
+    beta_mean = zeros(n_yrs)
+    beta_mean[1] = init_beta_mean
+
+    for gen in 2:n_yrs
+        sg = selection_gradient(z, h_z, beta_mean[gen-1]; δ=δ)
+
+        # Mean fitness (≈1 at equilibrium, with small correction)
+        W_bar = 1.0 + sg.d²λ * var_beta_series[gen-1] / 2
+
+        # Breeder&#39;s equation
+        beta_mean[gen] = beta_mean[gen-1] + sg.dλ * var_beta_series[gen-1] / W_bar
+    end
+
+    return beta_mean
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Main.approx_mean_dynamics</code></pre><pre><code class="language-julia hljs">approx_20 = approx_mean_dynamics(z, h_z, -20.0, sol_minus20.var_beta; n_yrs=n_yrs)
+approx_30 = approx_mean_dynamics(z, h_z, -30.0, sol_minus30.var_beta; n_yrs=n_yrs)
+
+p1 = plot(1:n_yrs, sol_minus20.mean_beta,
+    xlabel=&quot;Time&quot;, ylabel=&quot;Mean β₀&quot;,
+    title=&quot;IPM vs. approximation&quot;,
+    label=&quot;IPM (start -20)&quot;, color=:blue, linewidth=3)
+plot!(1:n_yrs, sol_minus30.mean_beta,
+    label=&quot;IPM (start -30)&quot;, color=:turquoise, linewidth=3)
+plot!(1:n_yrs, approx_20, label=&quot;Approx&quot;, color=:red, linestyle=:dash, linewidth=2)
+plot!(1:n_yrs, approx_30, label=false, color=:red, linestyle=:dash, linewidth=2)
+hline!([β₀_ESS], color=:gray, linestyle=:dot, label=&quot;ESS&quot;)</code></pre><img src="f9edb398.svg" alt="Example block output"/><p>The approximation (dashed red) closely tracks the 2D IPM (solid lines), confirming that the selection gradient approximation captures the essential dynamics.</p><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>In this vignette we implemented the evolving IPM framework from Rees &amp; Ellner (2016):</p><ol><li><strong>Fitness landscapes</strong>: <span>$\lambda(\beta_0)$</span> is a concave function with a maximum at the ESS <span>$\approx -24.9$</span></li><li><strong>ESS</strong>: Found by iterative invasion — the flowering strategy that cannot be invaded</li><li><strong>PIP</strong>: The pairwise invasibility plot confirms convergence stability of the ESS</li><li><strong>2D IPM</strong>: Joint size <span>$\times$</span> genotype projection tracks both ecological and evolutionary dynamics</li><li><strong>Evolutionary trajectories</strong>: The mean flowering intercept converges to the ESS from both directions</li><li><strong>Genetic variance</strong>: Maintained at mutation-selection balance</li><li><strong>Selection decomposition</strong>: Opposing selection through survival (negative) and recruitment (positive)</li><li><strong>Gaussian approximation</strong>: The breeder&#39;s equation accurately predicts mean trait dynamics</li></ol><p>The 2D evolving IPM provides a powerful framework for studying eco-evolutionary dynamics in structured populations, connecting demographic rates to evolutionary change through the Price equation and its IPM analog.</p><h3 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h3><ul><li>Rees, M. &amp; Ellner, S.P. (2016) Evolving integral projection models: evolutionary demography meets eco-evolutionary dynamics. <em>Methods in Ecology and Evolution</em>, <strong>7</strong>, 157–170.</li><li>Kachi, N. &amp; Hirose, T. (1985) Population dynamics of <em>Oenothera glazioviana</em> in a sand-dune system. <em>Journal of Ecology</em>, <strong>73</strong>, 887–901.</li><li>Rees, M. &amp; Rose, K.E. (2002) Evolution of flowering strategies in <em>Oenothera glazioviana</em>. <em>Proceedings of the Royal Society B</em>, <strong>269</strong>, 1509–1515.</li><li>Iwasa, Y., Pomiankowski, A. &amp; Nee, S. (1991) The evolution of costly mate preferences. <em>Evolution</em>, <strong>45</strong>, 1431–1442.</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../10_padrino/">« PADRINO Database Integration</a><a class="docs-footer-nextpage" href="../12_time_lag/">Time-Lagged Integral Projection Models »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 8 June 2026 23:57">Monday 8 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
