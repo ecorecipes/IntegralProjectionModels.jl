@@ -21,4 +21,5 @@ using Statistics
     include("test_padrino.jl")
     include("test_time_lag.jl")
     include("test_demographic.jl")
+    include("test_individual_samplers.jl")
 end

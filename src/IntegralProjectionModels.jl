@@ -32,6 +32,9 @@ export FecundityRate, LogisticFecundityRate, RecruitmentDistribution
 include("vital_rates/custom.jl")
 export CustomVitalRate
 
+# Individual-level samplers for the vital-rate types (individual-based realizations)
+include("individual_samplers.jl")
+
 # Kernel types
 include("kernels/abstract.jl")
 export AbstractIPMKernel, AbstractSubKernel, KernelFamily, CC, CD, DC, DD
