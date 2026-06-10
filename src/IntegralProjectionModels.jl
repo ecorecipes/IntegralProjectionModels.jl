@@ -3,6 +3,7 @@ module IntegralProjectionModels
 using CommonSolve
 using Distributions
 using LinearAlgebra
+using Random
 using StructuredPopulationCore
 using RecipesBase
 using SciMLBase
@@ -55,7 +56,7 @@ export AbstractContinuousStateStructure, SimpleContinuousState, GeneralContinuou
 export AbstractProjectionStructure
 export AbstractDensityDependence, DensityIndependent, DensityDependent
 export AbstractStochasticity, Deterministic, StochasticKernelResampled,
-       StochasticParameterResampled
+       StochasticParameterResampled, Demographic
 export DirectIteration, EigenAnalysis
 
 # Problem type
@@ -64,7 +65,7 @@ export IPMProblem, remake
 
 # Solve
 include("solve.jl")
-export IPMSolution
+export IPMSolution, demographic_ensemble
 # solve is re-exported via CommonSolve
 using CommonSolve: solve
 export solve

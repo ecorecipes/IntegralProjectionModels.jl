@@ -20,4 +20,5 @@ using Statistics
     include("test_monocarp.jl")
     include("test_padrino.jl")
     include("test_time_lag.jl")
+    include("test_demographic.jl")
 end
