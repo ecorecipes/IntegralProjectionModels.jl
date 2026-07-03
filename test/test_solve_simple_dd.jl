@@ -31,4 +31,24 @@
         @test sol.kernel_matrices isa Vector
         @test length(sol.kernel_matrices) == 50
     end
+
+    @testset "Density-dependent parameter-resampled stochasticity" begin
+        function dd_stoch_kernel(n_t, t, params)
+            total_N = sum(n_t)
+            s = ConstantSurvival(max(0.05, params.base_survival - params.dd_strength * total_N))
+            g = CustomVitalRate((z_prime, z) -> z_prime == z ? 1 / step_size(domain) : 0.0)
+            PKernel(s, g, domain)
+        end
+
+        env_sampler(t) = (base_survival = 1.3, dd_strength = 0.002)
+
+        prob = IPMProblem(DensityDependent(), StochasticParameterResampled(),
+            dd_stoch_kernel, domain, n0, (0, 6); env_state = env_sampler)
+        sol = solve(prob)
+
+        @test sol.retcode == :Success
+        @test length(sol.kernel_matrices) == 6
+        @test maximum(abs.(sol.kernel_matrices[1] .- sol.kernel_matrices[2])) > 0
+        @test sol.lambdas[2] != sol.lambdas[1]
+    end
 end

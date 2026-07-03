@@ -64,10 +64,6 @@ function materialize(k::FKernel)
         end
     end
 
-    if k.eviction == DiscreteExtrema
-        apply_discrete_extrema!(K)
-    end
-
     return K
 end
 
@@ -89,10 +85,6 @@ function materialize(k::CustomKernel)
         end
     end
 
-    if k.eviction == DiscreteExtrema
-        apply_discrete_extrema!(K)
-    end
-
     return K
 end
 
@@ -102,8 +94,12 @@ end
 Materialize a composed kernel by summing the materialized sub-kernels.
 """
 function materialize(k::ComposedKernel)
-    matrices = map(materialize, k.subkernels)
-    return sum(matrices)
+    first_matrix = materialize(first(k.subkernels))
+    K = copy(first_matrix)
+    for subkernel in Base.Iterators.drop(k.subkernels, 1)
+        K .+= materialize(subkernel)
+    end
+    return K
 end
 
 """
@@ -112,6 +108,7 @@ end
 Return the stored matrix directly.
 """
 materialize(k::MatrixKernel) = k.matrix
+materialize(K::AbstractMatrix) = K
 
 """
     materialize(mk::MegaKernel) -> Matrix
@@ -135,13 +132,17 @@ function materialize(mk::MegaKernel)
         offset += sz
     end
 
+    materialized = Dict{Tuple{Symbol, Symbol}, AbstractMatrix}()
+    for (key, kernel) in mk.kernels
+        materialized[key] = materialize(kernel)
+    end
+
     # Infer element type from sub-kernels
-    Telm = isempty(mk.kernels) ? Float64 :
-           promote_type((eltype(materialize(k)) for (_, k) in mk.kernels)...)
+    Telm = isempty(materialized) ? Float64 :
+           promote_type((eltype(M) for M in values(materialized))...)
     K = zeros(Telm, total, total)
 
-    for ((from, to), kernel) in mk.kernels
-        M = materialize(kernel)
+    for ((from, to), M) in materialized
         r_start = offsets[to] + 1
         r_end = offsets[to] + n_states(mk.states[to])
         c_start = offsets[from] + 1

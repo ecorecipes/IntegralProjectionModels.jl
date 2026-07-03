@@ -51,6 +51,18 @@
         @test all(K[1:m, 1:m] .== 0.0) || maximum(abs.(K[1:m, 1:m])) < 1e-15
     end
 
+    @testset "Age kernel expansion preserves age-1 fecundity at max age" begin
+        domain = ContinuousDomain(0.0, 10.0, 10)
+        age_struct = AgeStructure(1)
+        m = n_states(domain)
+
+        p_func(a) = MatrixKernel(fill(0.2, m, m))
+        f_func(a) = MatrixKernel(fill(0.1, m, m))
+
+        K = expand_age_kernels(p_func, f_func, age_struct, domain)
+        @test K ≈ fill(0.3, m, m)
+    end
+
     @testset "Age×size IPM solve" begin
         domain = ContinuousDomain(0.0, 10.0, 20)
         age_struct = AgeStructure(3)

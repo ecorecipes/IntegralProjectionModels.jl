@@ -66,7 +66,7 @@ function expand_age_kernels(p_func, f_func, age_structure::AgeStructure,
             K[next_row_start:next_row_end, row_start:row_end] .= P_a
         else
             # Max age stays at max age (diagonal block)
-            K[row_start:row_end, row_start:row_end] .= P_a
+            K[row_start:row_end, row_start:row_end] .+= P_a
         end
     end
 

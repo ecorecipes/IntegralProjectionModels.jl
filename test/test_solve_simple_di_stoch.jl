@@ -22,6 +22,18 @@
         @test all(sol.lambdas .> 0)
     end
 
+    @testset "Kernel-resampled stochasticity with raw matrices" begin
+        K1 = [0.8 0.1; 0.2 0.7]
+        K2 = [0.6 0.0; 0.1 0.9]
+        prob = IPMProblem(StochasticKernelResampled(), [K1, K2], ContinuousDomain(0.0, 1.0, 2),
+            [0.4, 0.6], (0, 4))
+        sol = solve(prob; kernel_seq = [1, 2, 1, 2])
+
+        @test sol.retcode == :Success
+        @test sol.kernel_matrices == [K1, K2, K1, K2]
+        @test all(isfinite, sol.lambdas)
+    end
+
     @testset "Parameter-resampled stochasticity" begin
         # Kernel builder function: takes sampled params, returns kernel
         function build_kernel(params)

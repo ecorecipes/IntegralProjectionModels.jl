@@ -41,4 +41,13 @@
             @test K[10, j] ≈ K_copy[10, j] + deficit
         end
     end
+
+    @testset "Discrete extrema does not renormalize fecundity/custom kernels" begin
+        domain = ContinuousDomain(0.0, 1.0, 5)
+        fec = FKernel(CustomVitalRate((z_prime, z) -> 3.0), domain; eviction = DiscreteExtrema)
+        custom = CustomKernel((z_prime, z) -> 3.0, domain; eviction = DiscreteExtrema)
+
+        @test materialize(fec) ≈ materialize(FKernel(CustomVitalRate((z_prime, z) -> 3.0), domain))
+        @test materialize(custom) ≈ materialize(CustomKernel((z_prime, z) -> 3.0, domain))
+    end
 end

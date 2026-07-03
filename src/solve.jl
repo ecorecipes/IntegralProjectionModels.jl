@@ -101,8 +101,9 @@ function _solve(::AbstractIPMStructure, ::Any, ::StochasticKernelResampled,
     n_steps = tf - t0
 
     # prob.kernel should be a vector/tuple of kernels or a function returning indexed kernels
-    kernel_set = _build_kernel_set(prob)
-    n_kernels = length(kernel_set)
+    kernel_set = prob.density isa DensityIndependent ?
+                 _build_kernel_set(prob, prob.n0, t0) : nothing
+    n_kernels = length(kernel_set === nothing ? prob.kernel : kernel_set)
 
     if kernel_seq === nothing
         kernel_seq = rand(1:n_kernels, n_steps)
@@ -114,6 +115,9 @@ function _solve(::AbstractIPMStructure, ::Any, ::StochasticKernelResampled,
     used_kernels = Vector{AbstractMatrix}(undef, n_steps)
 
     for t in 1:n_steps
+        if prob.density isa DensityDependent
+            kernel_set = _build_kernel_set(prob, u[t], t + t0 - 1)
+        end
         K = kernel_set[kernel_seq[t]]
         used_kernels[t] = K
         n_new = K * u[t]
@@ -142,8 +146,8 @@ function _solve(::AbstractIPMStructure, ::Any, ::StochasticParameterResampled,
 
     for t in 1:n_steps
         # env_state is a function that returns sampled parameters
-        params = prob.env_state(t + t0 - 1)
-        K = _build_param_kernel(prob, params)
+        params = _sample_env_state(prob, u[t], t + t0 - 1)
+        K = _build_param_kernel(prob, u[t], t + t0 - 1, params)
         kernel_matrices[t] = K
         n_new = K * u[t]
         pop_t = sum(u[t])
@@ -264,19 +268,30 @@ function _build_dd_kernel(prob::IPMProblem, n_t, t)
     return materialize(kernel)
 end
 
-function _build_kernel_set(prob::IPMProblem)
-    # If kernel is a vector/tuple of AbstractIPMKernel, materialize each
+function _build_kernel_set(prob::IPMProblem, n_t, t)
     if prob.kernel isa AbstractVector || prob.kernel isa Tuple
-        return [materialize(k) for k in prob.kernel]
+        return [_materialize_kernel_entry(prob, k, n_t, t) for k in prob.kernel]
     end
-    # If kernel is already a vector of matrices
     return prob.kernel
 end
 
-function _build_param_kernel(prob::IPMProblem, params)
-    # prob.kernel should be a function: params -> AbstractIPMKernel
-    kernel = prob.kernel(params)
+function _build_param_kernel(prob::IPMProblem, n_t, t, params)
+    kernel = prob.density isa DensityDependent ?
+             prob.kernel(n_t, t, params) :
+             prob.kernel(params)
     return materialize(kernel)
+end
+
+function _materialize_kernel_entry(prob::IPMProblem, kernel, n_t, t)
+    if prob.density isa DensityDependent && kernel isa Function
+        return materialize(kernel(n_t, t, prob.p))
+    end
+    return materialize(kernel)
+end
+
+function _sample_env_state(prob::IPMProblem, n_t, t)
+    applicable(prob.env_state, n_t, t) && return prob.env_state(n_t, t)
+    return prob.env_state(t)
 end
 
 # Continuous-time solve methods are provided by ContinuousStatePopulationDynamics
