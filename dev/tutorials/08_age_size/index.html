@@ -88,7 +88,7 @@ for a in ages_plot
         label=&quot;Age $a&quot;, linewidth=2)
 end
 
-plot(p1, p2, p3, p4, layout=(2, 2), size=(900, 700))</code></pre><img src="7e30a8d7.svg" alt="Example block output"/><h2 id="Building-Age-Specific-Kernels"><a class="docs-heading-anchor" href="#Building-Age-Specific-Kernels">Building Age-Specific Kernels</a><a id="Building-Age-Specific-Kernels-1"></a><a class="docs-heading-anchor-permalink" href="#Building-Age-Specific-Kernels" title="Permalink"></a></h2><p>We use <code>expand_age_kernels</code> to construct the full block-structured matrix.</p><pre><code class="language-julia hljs"># P kernel for each age: survival(z, a) × growth(z&#39;, z, a)
+plot(p1, p2, p3, p4, layout=(2, 2), size=(900, 700))</code></pre><img src="d94f11b2.svg" alt="Example block output"/><h2 id="Building-Age-Specific-Kernels"><a class="docs-heading-anchor" href="#Building-Age-Specific-Kernels">Building Age-Specific Kernels</a><a id="Building-Age-Specific-Kernels-1"></a><a class="docs-heading-anchor-permalink" href="#Building-Age-Specific-Kernels" title="Permalink"></a></h2><p>We use <code>expand_age_kernels</code> to construct the full block-structured matrix.</p><pre><code class="language-julia hljs"># P kernel for each age: survival(z, a) × growth(z&#39;, z, a)
 function p_func(a)
     PKernel(
         CustomVitalRate(z -&gt; s_z(z, a)),
@@ -155,7 +155,7 @@ Age×size λ                 = 0.958935
 Difference                 = 0.041746</code></pre><p>The models give different <span>$\lambda$</span> values because the age-averaged model does not properly account for the covariance between age and size in the stable population.</p><h2 id="Block-Matrix-Structure"><a class="docs-heading-anchor" href="#Block-Matrix-Structure">Block Matrix Structure</a><a id="Block-Matrix-Structure-1"></a><a class="docs-heading-anchor-permalink" href="#Block-Matrix-Structure" title="Permalink"></a></h2><pre><code class="language-julia hljs">heatmap(K_age,
     title=&quot;Age×size kernel ($(max_age) ages × $(m) sizes)&quot;,
     xlabel=&quot;State index&quot;, ylabel=&quot;State index&quot;,
-    color=:viridis, size=(600, 550))</code></pre><img src="b6f7baf8.svg" alt="Example block output"/><pre><code class="language-julia hljs"># Annotate the block structure
+    color=:viridis, size=(600, 550))</code></pre><img src="32b73251.svg" alt="Example block output"/><pre><code class="language-julia hljs"># Annotate the block structure
 plt = heatmap(log10.(abs.(K_age) .+ 1e-20),
     title=&quot;log₁₀|K| (block structure visible)&quot;,
     xlabel=&quot;State index&quot;, ylabel=&quot;State index&quot;,
@@ -167,7 +167,7 @@ for a in 1:max_age-1
     vline!(plt, [boundary], color=:white, alpha=0.5, label=false)
     hline!(plt, [boundary], color=:white, alpha=0.5, label=false)
 end
-plt</code></pre><img src="eeda7f10.svg" alt="Example block output"/><p>The block structure shows:</p><ul><li><strong>First row block</strong>: F kernels (fecundity from all ages producing age-1 offspring)</li><li><strong>Sub-diagonal blocks</strong>: P kernels (survival-growth, aging from <span>$a$</span> to <span>$a+1$</span>)</li><li><strong>Last diagonal block</strong>: P kernel for max age (absorbing: survivors stay at max age)</li></ul><h2 id="Stable-Age-Size-Distribution"><a class="docs-heading-anchor" href="#Stable-Age-Size-Distribution">Stable Age-Size Distribution</a><a id="Stable-Age-Size-Distribution-1"></a><a class="docs-heading-anchor-permalink" href="#Stable-Age-Size-Distribution" title="Permalink"></a></h2><pre><code class="language-julia hljs">idx_age = argmax(real.(e_age.values))
+plt</code></pre><img src="5bfe38c5.svg" alt="Example block output"/><p>The block structure shows:</p><ul><li><strong>First row block</strong>: F kernels (fecundity from all ages producing age-1 offspring)</li><li><strong>Sub-diagonal blocks</strong>: P kernels (survival-growth, aging from <span>$a$</span> to <span>$a+1$</span>)</li><li><strong>Last diagonal block</strong>: P kernel for max age (absorbing: survivors stay at max age)</li></ul><h2 id="Stable-Age-Size-Distribution"><a class="docs-heading-anchor" href="#Stable-Age-Size-Distribution">Stable Age-Size Distribution</a><a id="Stable-Age-Size-Distribution-1"></a><a class="docs-heading-anchor-permalink" href="#Stable-Age-Size-Distribution" title="Permalink"></a></h2><pre><code class="language-julia hljs">idx_age = argmax(real.(e_age.values))
 w_age = real.(e_age.vectors[:, idx_age])
 w_age ./= sum(w_age)
 
@@ -200,7 +200,7 @@ end</code></pre><pre class="documenter-example-output"><code class="nohighlight 
   Age 10: 11.85%</code></pre><pre><code class="language-julia hljs">bar(1:max_age, age_totals,
     xlabel=&quot;Age class&quot;, ylabel=&quot;Proportion&quot;,
     title=&quot;Stable age distribution&quot;,
-    label=false)</code></pre><img src="ac359a4d.svg" alt="Example block output"/><pre><code class="language-julia hljs"># Age-specific size distributions (normalized within each age)
+    label=false)</code></pre><img src="84801af6.svg" alt="Example block output"/><pre><code class="language-julia hljs"># Age-specific size distributions (normalized within each age)
 plt = plot(xlabel=&quot;Log body mass&quot;, ylabel=&quot;Density&quot;,
     title=&quot;Stable size distribution by age&quot;)
 for a in 1:min(max_age, 6)
@@ -209,7 +209,7 @@ for a in 1:min(max_age, 6)
         plot!(plt, z, d, label=&quot;Age $a&quot;, linewidth=2)
     end
 end
-plt</code></pre><img src="5c19108e.svg" alt="Example block output"/><pre><code class="language-julia hljs"># Mean size by age
+plt</code></pre><img src="e5fa3624.svg" alt="Example block output"/><pre><code class="language-julia hljs"># Mean size by age
 mean_by_age = Float64[]
 for a in 1:max_age
     if sum(age_dists[a]) &gt; 1e-10
@@ -223,7 +223,7 @@ end
 plot(1:max_age, mean_by_age,
     xlabel=&quot;Age&quot;, ylabel=&quot;Mean log body mass&quot;,
     title=&quot;Mean size by age at stable distribution&quot;,
-    marker=:circle, linewidth=2, label=false)</code></pre><img src="17397d1f.svg" alt="Example block output"/><h2 id="Population-Dynamics"><a class="docs-heading-anchor" href="#Population-Dynamics">Population Dynamics</a><a id="Population-Dynamics-1"></a><a class="docs-heading-anchor-permalink" href="#Population-Dynamics" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Initial population: all in age class 1 (newborns)
+    marker=:circle, linewidth=2, label=false)</code></pre><img src="0e4c715e.svg" alt="Example block output"/><h2 id="Population-Dynamics"><a class="docs-heading-anchor" href="#Population-Dynamics">Population Dynamics</a><a id="Population-Dynamics-1"></a><a class="docs-heading-anchor-permalink" href="#Population-Dynamics" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Initial population: all in age class 1 (newborns)
 total_states = m * max_age
 n0_age = zeros(total_states)
 n0_age[1:m] .= 1.0 / m
@@ -243,7 +243,7 @@ plot(lambdas_age,
     xlabel=&quot;Time step&quot;, ylabel=&quot;λ(t)&quot;,
     title=&quot;Convergence to asymptotic λ (age×size model)&quot;,
     label=&quot;λ(t)&quot;, linewidth=1)
-hline!([λ_age], label=&quot;Asymptotic λ&quot;, linestyle=:dash, color=:red, linewidth=2)</code></pre><img src="95b5a12c.svg" alt="Example block output"/><h2 id="Age-Specific-Contributions"><a class="docs-heading-anchor" href="#Age-Specific-Contributions">Age-Specific Contributions</a><a id="Age-Specific-Contributions-1"></a><a class="docs-heading-anchor-permalink" href="#Age-Specific-Contributions" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Which age classes contribute most to population growth?
+hline!([λ_age], label=&quot;Asymptotic λ&quot;, linestyle=:dash, color=:red, linewidth=2)</code></pre><img src="48743bf9.svg" alt="Example block output"/><h2 id="Age-Specific-Contributions"><a class="docs-heading-anchor" href="#Age-Specific-Contributions">Age-Specific Contributions</a><a id="Age-Specific-Contributions-1"></a><a class="docs-heading-anchor-permalink" href="#Age-Specific-Contributions" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Which age classes contribute most to population growth?
 # Compute elasticity to each age&#39;s F kernel
 K_total = K_age
 e_total = eigen(K_total)
@@ -273,4 +273,4 @@ end
 bar(1:max_age, fec_elas_by_age,
     xlabel=&quot;Age&quot;, ylabel=&quot;Fecundity elasticity&quot;,
     title=&quot;Fecundity elasticity by age class&quot;,
-    label=false)</code></pre><img src="c2c03aad.svg" alt="Example block output"/><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>In this vignette we:</p><ol><li>Built an <strong>age×size IPM</strong> for Soay sheep with age-dependent vital rates</li><li>Used <code>AgeStructure</code> and <code>expand_age_kernels</code> to automatically construct the block matrix</li><li>Visualized age effects on survival (senescence), growth (slowing), and reproduction (decline)</li><li>Computed <span>$\lambda$</span> and compared with the size-only model</li><li>Examined the stable age-size distribution showing how size distributions shift with age</li><li>Computed age-specific fecundity elasticities</li></ol></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../07_general_ipm/">« General IPM with Seed Bank</a><a class="docs-footer-nextpage" href="../09_categorical/">Categorical Composition of IPMs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Friday 3 July 2026 17:13">Friday 3 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+    label=false)</code></pre><img src="f70cc1f8.svg" alt="Example block output"/><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>In this vignette we:</p><ol><li>Built an <strong>age×size IPM</strong> for Soay sheep with age-dependent vital rates</li><li>Used <code>AgeStructure</code> and <code>expand_age_kernels</code> to automatically construct the block matrix</li><li>Visualized age effects on survival (senescence), growth (slowing), and reproduction (decline)</li><li>Computed <span>$\lambda$</span> and compared with the size-only model</li><li>Examined the stable age-size distribution showing how size distributions shift with age</li><li>Computed age-specific fecundity elasticities</li></ol></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../07_general_ipm/">« General IPM with Seed Bank</a><a class="docs-footer-nextpage" href="../09_categorical/">Categorical Composition of IPMs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Friday 3 July 2026 18:56">Friday 3 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
