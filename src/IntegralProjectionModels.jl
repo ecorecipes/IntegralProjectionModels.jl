@@ -10,6 +10,13 @@ using SciMLBase
 using Statistics
 using StatsFuns: logistic
 
+# Functions shared across the stack are extended here rather than redefined, so that their
+# names stay usable when several packages are loaded together. The categorical operations
+# and two verbs belong to StructuredPopulationCore, `remake` to SciMLBase.
+import StructuredPopulationCore: left_kan_extension, right_kan_extension, stratify, coarsen,
+    compose_from_uwd, demographic_ensemble, to_discrete_problem
+import SciMLBase: remake
+
 # Domain types (re-exported shared abstractions from StructuredPopulationCore)
 export ContinuousDomain, DiscreteDomain
 export meshpoints, step_size, bounds, n_states

@@ -22,4 +22,5 @@ using Statistics
     include("test_time_lag.jl")
     include("test_demographic.jl")
     include("test_individual_samplers.jl")
+    include("test_shared_functions.jl")
 end
