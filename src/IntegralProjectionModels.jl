@@ -16,6 +16,17 @@ using StatsFuns: logistic
 import StructuredPopulationCore: left_kan_extension, right_kan_extension, stratify, coarsen,
     compose_from_uwd, demographic_ensemble, to_discrete_problem
 import SciMLBase: remake
+# The coupled-system data layer and its stepping engine are shared with
+# MatrixProjectionModels.jl and live, unexported, in StructuredPopulationCore. They are
+# imported here, extended where IPMs need it, and their public names exported below.
+import StructuredPopulationCore: AbstractStateVariable, AbstractInteractionRule, AbstractScheduledEvent,
+    PopulationComponent, PopulationSystem, Observable, PulseRelease, SingleDayRelease, SprayEvent,
+    TransferRule, ReproductionRule, MortalityRule, CustomRule, get_state, set_state!, has_state,
+    total_population, component_total, component_totals, inject!, remove_fraction!, apply_event!,
+    component_stage_names, validate_component_model
+import StructuredPopulationCore: AbstractDailySubstep, apply_substep!, StateUpdateSubstep, CustomSubstep,
+    StageFlux, StageTransfer, RuleEffect, AbstractTransitionRule, apply_rule, CustomEvent, solve_coupled
+import StructuredPopulationCore: _project_population, _ensure_unique_names, _require_vector_carriers
 
 # Domain types (re-exported shared abstractions from StructuredPopulationCore)
 export ContinuousDomain, DiscreteDomain
@@ -88,6 +99,18 @@ export sensitivity, elasticity, damping_ratio
 export stochastic_growth_rate, mean_kernel
 export is_irreducible, is_primitive, is_ergodic
 export area_under_curve
+
+# Coupled IPMs: several populations stepped together, on the engine shared with
+# MatrixProjectionModels.jl
+include("coupled.jl")
+export DiscretizedKernel, CoupledIPMProblem, CoupledIPMSolution
+export PopulationComponent, PopulationSystem, get_state, set_state!, has_state
+export total_population, component_total, component_totals, inject!, remove_fraction!
+export AbstractDailySubstep, apply_substep!, StateUpdateSubstep, CustomSubstep
+export StageFlux, StageTransfer, RuleEffect, apply_rule, apply_event!
+export AbstractTransitionRule, AbstractInteractionRule, AbstractScheduledEvent
+export TransferRule, ReproductionRule, MortalityRule, CustomRule
+export PulseRelease, SingleDayRelease, SprayEvent, CustomEvent, Observable
 
 # Time-lagged models
 include("time_lag.jl")

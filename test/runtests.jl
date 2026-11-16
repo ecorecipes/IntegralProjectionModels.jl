@@ -23,4 +23,5 @@ using Statistics
     include("test_demographic.jl")
     include("test_individual_samplers.jl")
     include("test_shared_functions.jl")
+    include("test_coupled.jl")
 end

@@ -71,9 +71,15 @@ over fibres and normalising by fibre size:
 - `f`: a Catlab `FinFunction` from `FinSet(n_fine)` to `FinSet(n_coarse)`
 
 # Returns
-- `A_coarse::Matrix{Float64}`: the coarsened matrix
+- `A_coarse`: the coarsened matrix, of the floating-point type of `A`'s entries
+
+CategoricalPopulationDynamics.jl has a method of the same (shared) function for any
+`AbstractMatrix`; this one, for a `Matrix`, behaves identically, so the result does not
+depend on which packages are loaded.
 """
 function IntegralProjectionModels.coarsen(A::Matrix, f::FinFunction)
+    size(A, 1) == size(A, 2) || throw(DimensionMismatch(
+        "coarsen expects a square matrix, got size $(size(A))"))
     n_fine = length(dom(f))
     n_coarse = length(codom(f))
     n_fine == size(A, 1) || throw(DimensionMismatch(
@@ -85,7 +91,7 @@ function IntegralProjectionModels.coarsen(A::Matrix, f::FinFunction)
         fibre_sizes[f(i)] += 1
     end
 
-    A_coarse = zeros(n_coarse, n_coarse)
+    A_coarse = zeros(float(eltype(A)), n_coarse, n_coarse)
     for j_fine in 1:n_fine
         c_j = f(j_fine)
         for i_fine in 1:n_fine

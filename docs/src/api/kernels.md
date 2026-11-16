@@ -52,5 +52,6 @@ Composed kernels combine subkernels into a full projection kernel.
 ```@docs
 ComposedKernel
 MegaKernel
+DiscretizedKernel
 materialize
 ```
