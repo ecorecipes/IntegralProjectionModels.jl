@@ -35,6 +35,12 @@ jobs:
         with:
           repository: ecorecipes/ProjectionModels.jl
           path: ProjectionModels.jl
+      # a test-only dependency, found at ../MatrixProjectionModels.jl through [sources]
+      - name: Checkout MatrixProjectionModels.jl
+        uses: actions/checkout@v4
+        with:
+          repository: ecorecipes/MatrixProjectionModels.jl
+          path: MatrixProjectionModels.jl
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
