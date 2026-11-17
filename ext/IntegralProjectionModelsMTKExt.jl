@@ -3,6 +3,7 @@ module IntegralProjectionModelsMTKExt
 using IntegralProjectionModels
 using ModelingToolkit
 using Symbolics
+using Distributions: Normal, pdf
 
 """
     IPMModel
@@ -55,8 +56,10 @@ Convert a symbolic IPMModel to a concrete IPMProblem by substituting parameter v
 """
 function IntegralProjectionModels.IPMProblem(model::IPMModel, domain::ContinuousDomain,
         n0, tspan; p::Dict, kwargs...)
-    # Compile symbolic expressions to Julia functions
-    z_var = only(Symbolics.get_variables(model.growth_mean_expr))
+    # Compile symbolic expressions to Julia functions. `get_variables` returns the parameters
+    # as well as the size variable, so keep the one symbol that is not a parameter.
+    z_var = only(filter(v -> !ModelingToolkit.isparameter(v),
+        Symbolics.get_variables(model.growth_mean_expr)))
 
     surv_fn = Symbolics.build_function(
         Symbolics.substitute(model.survival_expr, p),
@@ -66,9 +69,11 @@ function IntegralProjectionModels.IPMProblem(model::IPMModel, domain::Continuous
         Symbolics.substitute(model.growth_mean_expr, p),
         z_var; expression = Val{false})
 
-    g_sigma_val = Float64(Symbolics.substitute(model.growth_sd, p))
-    r_mean_val = Float64(Symbolics.substitute(model.recruit_mean, p))
-    r_sd_val = Float64(Symbolics.substitute(model.recruit_sd, p))
+    # substitution leaves a symbolic constant; unwrap it before converting
+    number(x) = Float64(Symbolics.value(Symbolics.substitute(x, p)))
+    g_sigma_val = number(model.growth_sd)
+    r_mean_val = number(model.recruit_mean)
+    r_sd_val = number(model.recruit_sd)
 
     fecund_fn = Symbolics.build_function(
         Symbolics.substitute(model.fecundity_expr, p),
