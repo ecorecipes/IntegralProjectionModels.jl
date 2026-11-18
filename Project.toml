@@ -1,7 +1,7 @@
 name = "IntegralProjectionModels"
 uuid = "00376763-44f4-49c9-a075-cdcba60854bb"
 authors = ["Simon Frost"]
-version = "0.1.2"
+version = "0.2.0"
 
 [deps]
 CommonSolve = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
@@ -43,10 +43,12 @@ CommonSolve = "0.2"
 DataFrames = "1"
 Distributions = "0.25"
 Downloads = "1"
-MatrixProjectionModels = "0.1.4"
+MatrixProjectionModels = "0.2"
+ModelingToolkit = "11.27"
+OrdinaryDiffEq = "7"
 Plots = "1"
 RecipesBase = "1"
-SciMLBase = "2"
+SciMLBase = "3.58"
 StatsFuns = "1, 2"
 StructuredPopulationCore = "0.1.4"
 julia = "1.11"
