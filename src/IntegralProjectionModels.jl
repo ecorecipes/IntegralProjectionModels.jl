@@ -10,6 +10,10 @@ using SciMLBase
 using Statistics
 using StatsFuns: logistic
 
+# Resilience operators: `linearise` is ResilienceCore's function, extended in resilience.jl.
+import ResilienceCore
+using ResilienceCore: linearise
+
 # Functions shared across the stack are extended here rather than redefined, so that their
 # names stay usable when several packages are loaded together. The categorical operations
 # and two verbs belong to StructuredPopulationCore, `remake` to SciMLBase.
@@ -132,6 +136,10 @@ export compose_kernels, compose_from_uwd
 # SciML interface
 include("sciml_interface.jl")
 export to_discrete_problem
+
+# Resilience operators (ResilienceCore)
+include("resilience.jl")
+export linearise
 
 # Plotting
 include("plotting.jl")

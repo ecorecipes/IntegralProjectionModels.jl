@@ -24,4 +24,5 @@ using Statistics
     include("test_individual_samplers.jl")
     include("test_shared_functions.jl")
     include("test_coupled.jl")
+    include("test_resilience.jl")
 end
