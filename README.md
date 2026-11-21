@@ -10,6 +10,7 @@ A Julia package for building and analyzing Integral Projection Models (IPMs) —
 - **Age×size models**: age-structured expansion of size-based kernels
 - **Eviction correction**: truncated distribution and discrete extrema methods
 - **Analysis**: asymptotic growth rate (λ), sensitivity, elasticity, stochastic growth rate
+- **Resilience operators**: `linearise` (from [ResilienceCore.jl](https://github.com/ecorecipes/ResilienceCore.jl)) gives the mesh-weighted projection operator of a density-independent, deterministic IPM, for ResilienceCore's stability and transient metrics
 - **Extensible**: package extensions for Turing.jl, Gen.jl, and ModelingToolkit.jl
 
 ## Quick Start
